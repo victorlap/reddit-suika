@@ -15,8 +15,8 @@
   "menu": {
     "items": [
       {
-        "label": "[animal-merge] New Post",
-        "description": "Create a new animal-merge post.",
+        "label": "[Animal Merge] New game post",
+        "description": "Create a new Animal Merge game post.",
         "location": "subreddit",
         "endpoint": "/internal/on/menu/new-post"
       }
