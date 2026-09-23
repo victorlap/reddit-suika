@@ -6,32 +6,93 @@
       name="viewport"
       content="width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no"
     >
-    <title>Game</title>
+    <title>Animal Merge</title>
     <link rel="modulepreload" href="main.js">
     <style>
+    html,
     body {
       margin: 0;
       width: 100dvw;
       height: 100dvh;
       overflow: hidden;
-      display: grid;
-      place-items: center;
+      background: #1f2430;
+      font-family: system-ui, sans-serif;
+      color: #fdf6e3;
     }
-    main {
+    canvas {
+      display: block;
+      width: 100dvw;
+      height: 100dvh;
+    }
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(31, 36, 48, 0.85);
+    }
+    #overlay.show {
       display: grid;
-      gap: 1rem;
-      justify-items: center;
+    }
+    #panel {
+      background: #fdf6e3;
+      color: #5b4636;
+      border-radius: 16px;
+      padding: 20px 24px;
+      min-width: 260px;
+      max-width: 90vw;
+      text-align: center;
+    }
+    #panel h1 {
+      margin: 0 0 4px;
+      font-size: 22px;
+    }
+    #final {
+      font-size: 40px;
+      font-weight: 700;
+      margin: 4px 0 12px;
+    }
+    #board {
+      list-style: none;
+      margin: 0 0 12px;
+      padding: 0;
+      text-align: left;
+    }
+    #board li {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+    }
+    #board li.me {
+      font-weight: 700;
+    }
+    #me {
+      margin: 0 0 12px;
+      font-size: 14px;
+    }
+    #again {
+      font: inherit;
+      font-weight: 700;
+      padding: 10px 22px;
+      border: 0;
+      border-radius: 999px;
+      background: #e07a3a;
+      color: #fff;
+      cursor: pointer;
     }
     </style>
   </head>
   <body>
-    <main>
-      <div class="counter">
-        <button id="dec-btn" type="button">-</button>
-        <output id="counter">0</output>
-        <button id="inc-btn" type="button">+</button>
+    <canvas id="game"></canvas>
+    <div id="overlay">
+      <div id="panel">
+        <h1>Game over</h1>
+        <div id="final">0</div>
+        <ol id="board"></ol>
+        <p id="me"></p>
+        <button id="again" type="button">Play again</button>
       </div>
-    </main>
+    </div>
     <script src="main.js" type="module"></script>
   </body>
 </html>
