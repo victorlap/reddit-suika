@@ -1,4 +1,4 @@
-# Animal Merge Game Implementation Plan
+# Pile Kingdom Game Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, esbuild, Node 24 built-in test runner with type stripping, Matter.js 0.20, `@devvit/web` 0.14.5, Biome.
 
-**Spec:** `docs/superpowers/specs/2026-09-23-animal-merge-game-design.md`
+**Spec:** `docs/superpowers/specs/2026-09-23-pile-kingdom-game-design.md`
 
 ## Global Constraints
 
@@ -22,7 +22,8 @@
 - Tier count is 11. Only tiers 1 to 5 are dropped. Score for producing tier n is `n * (n + 1) / 2`.
 - Leaderboard key is `lb:<postId>`, member is username, top 10 returned.
 - Score submissions must be integers in `[0, 100000]`; else 400. No username: 401.
-- App name in `devvit.json` and `package.json`: `animal-merge`.
+- App name in `devvit.json` and `package.json`: `pile-kingdom`. Display title: `Pile Kingdom`. Tagline: `Have a whale of a pile.`
+- If `devvit upload` rejects `pile-kingdom` as taken, fall back to `pilekingdom` and change only `devvit.json`.
 - Sprites already exist at `public/animals/<name>.png` (chick, frog, duck, rabbit, penguin, dog, pig, cow, hippo, elephant, whale). Do not re-download.
 
 ## Review Focus
@@ -58,7 +59,7 @@ git mv -f src/client/game.ts src/client/main.ts 2>/dev/null || mv src/client/gam
 - [x] **Step 2: Replace the name placeholder and the renamed entry**
 
 ```bash
-grep -rl '<% name %>' . --exclude-dir=node_modules --exclude-dir=.git | xargs sed -i '' 's/<% name %>/animal-merge/g'
+grep -rl '<% name %>' . --exclude-dir=node_modules --exclude-dir=.git | xargs sed -i '' 's/<% name %>/pile-kingdom/g'
 sed -i '' 's#src/client/game.ts#src/client/main.ts#' package.json
 sed -i '' 's#game\.js#main.js#g' public/game.html
 ```
@@ -322,7 +323,7 @@ async function route(
 }
 
 async function routeMenuNewPost(): Promise<UiResponse> {
-  const post = await reddit.submitCustomPost({title: 'Animal Merge'})
+  const post = await reddit.submitCustomPost({title: 'Pile Kingdom'})
   return {
     showToast: {text: `Post ${post.id} created.`, appearance: 'success'},
     navigateTo: post.url,
@@ -330,7 +331,7 @@ async function routeMenuNewPost(): Promise<UiResponse> {
 }
 
 async function routeAppInstall(): Promise<TriggerResponse> {
-  await reddit.submitCustomPost({title: 'Animal Merge'})
+  await reddit.submitCustomPost({title: 'Pile Kingdom'})
   return {}
 }
 
@@ -927,7 +928,7 @@ before(async () => {
   server = createServer(async (req, rsp) => {
     await runWithContext(
       {
-        appName: 'animal-merge',
+        appName: 'pile-kingdom',
         postId: 't3_123',
         userId: username ? 't2_123' : undefined,
         username,
@@ -1603,7 +1604,7 @@ async function request(
       name="viewport"
       content="width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no"
     >
-    <title>Animal Merge</title>
+    <title>Pile Kingdom</title>
     <link rel="modulepreload" href="main.js">
     <style>
     html, body {
@@ -1847,8 +1848,8 @@ Replace the `<main>` contents with:
 ```html
     <main>
       <img src="/animals/whale.png" width="138" height="154" alt="Whale">
-      <h1>Animal Merge</h1>
-      <p>Drop animals. Match two to make a bigger one. Reach the whale.</p>
+      <h1>Pile Kingdom</h1>
+      <p>Have a whale of a pile. Match two animals to make a bigger one.</p>
       <button id="start-btn" type="button">Play</button>
     </main>
 ```
@@ -1868,7 +1869,7 @@ git rm -q public/snoo.png
 
 - [x] **Step 2: Update devvit.json menu copy**
 
-Change the menu item to `"label": "[Animal Merge] New game post"` and `"description": "Create a new Animal Merge game post."`.
+Change the menu item to `"label": "[Pile Kingdom] New game post"` and `"description": "Create a new Pile Kingdom game post."`.
 
 - [x] **Step 3: Write README.md**
 
@@ -1879,7 +1880,7 @@ git mv readme.md README.md
 Content:
 
 ````markdown
-# Animal Merge
+# Pile Kingdom
 
 A Suika-style drop-and-merge game for Reddit, built on Devvit. Drop animals into
 the pen; two of the same kind merge into the next bigger animal. Each game post
@@ -1905,7 +1906,7 @@ Open http://localhost:8787. The leaderboard is faked in memory under the name
 3. `npx devvit login`
 4. `npm run playtest r/<your-test-sub>` builds, uploads, and installs the app,
    then rebuilds on every change.
-5. In the subreddit, open the mod menu and pick "[Animal Merge] New game post".
+5. In the subreddit, open the mod menu and pick "[Pile Kingdom] New game post".
 
 ## Commands
 

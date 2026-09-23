@@ -1,4 +1,4 @@
-# Animal Merge: a Suika-style game for Reddit
+# Pile Kingdom: a Suika-style game for Reddit
 
 Date: 2026-09-23
 Status: approved in conversation (sections 1 and 2), sections 3 to 5 written from the same brief
