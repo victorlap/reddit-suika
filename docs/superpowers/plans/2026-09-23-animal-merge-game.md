@@ -47,7 +47,7 @@ Inputs the spec implies but did not spell out. Each has a test in the owning tas
 **Interfaces:**
 - Produces: a repo where `npm test` passes with the template's counter example still in place. Later tasks replace the counter code.
 
-- [ ] **Step 1: Copy template files without git and node_modules**
+- [x] **Step 1: Copy template files without git and node_modules**
 
 ```bash
 cd /Users/victorlap/Sites/dotpinq/reddit-suika
@@ -55,7 +55,7 @@ rsync -a --exclude .git --exclude node_modules --exclude .gitignore /tmp/dv-bare
 git mv -f src/client/game.ts src/client/main.ts 2>/dev/null || mv src/client/game.ts src/client/main.ts
 ```
 
-- [ ] **Step 2: Replace the name placeholder and the renamed entry**
+- [x] **Step 2: Replace the name placeholder and the renamed entry**
 
 ```bash
 grep -rl '<% name %>' . --exclude-dir=node_modules --exclude-dir=.git | xargs sed -i '' 's/<% name %>/animal-merge/g'
@@ -73,7 +73,7 @@ public/*.js.map
 .devvit/
 ```
 
-- [ ] **Step 3: Add Matter.js and its types**
+- [x] **Step 3: Add Matter.js and its types**
 
 ```bash
 npm install --save-exact matter-js@0.20.0
@@ -81,12 +81,12 @@ npm install --save-exact --save-dev @types/matter-js
 npm install
 ```
 
-- [ ] **Step 4: Run the full check**
+- [x] **Step 4: Run the full check**
 
 Run: `npm test`
 Expected: types, lint, unit tests, and build all pass. The unit test is the template's counter test. If Biome complains about `public/animals/LICENSE.txt` formatting, add `"!public/animals/"` to `files.includes` in `biome.jsonc`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -112,7 +112,7 @@ git commit -m "chore: scaffold from devvit bare template with matter-js"
 
 Note: rewriting `api.ts` breaks the template's counter server and client. That is expected. Task 2 only runs the tiers test and type checks the shared project, and Task 5 and Task 8 restore green for the whole suite. To keep `npm test` runnable in between, delete the template counter files in this task: `src/client/fetch.ts`, `src/server/server.test.ts`, and replace bodies of `src/server/db.ts` and `src/server/server.ts` as shown in Step 4 so the server compiles with only the internal routes.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `src/shared/tiers.test.ts`:
 
@@ -147,12 +147,12 @@ test('only the five smallest animals are ever dropped', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --experimental-strip-types --no-warnings=ExperimentalWarning --test src/shared/tiers.test.ts`
 Expected: FAIL, cannot find module `./tiers.ts`.
 
-- [ ] **Step 3: Write tiers, config, and api**
+- [x] **Step 3: Write tiers, config, and api**
 
 `src/shared/tiers.ts`:
 
@@ -255,7 +255,7 @@ export const EndpointMethod = {
 } as const satisfies {[endpoint: string]: 'GET' | 'POST'}
 ```
 
-- [ ] **Step 4: Remove the counter code so the tree compiles**
+- [x] **Step 4: Remove the counter code so the tree compiles**
 
 ```bash
 git rm -q src/client/fetch.ts src/server/server.test.ts
@@ -355,12 +355,12 @@ Replace `src/client/main.ts` with a stub Task 8 replaces:
 console.log('animal merge: client not wired yet')
 ```
 
-- [ ] **Step 5: Run tests and type check**
+- [x] **Step 5: Run tests and type check**
 
 Run: `npm test`
 Expected: PASS. Three tiers tests pass, `tsc --build` clean, build succeeds.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 npm run format
@@ -388,7 +388,7 @@ git commit -m "feat: add shared tier table, tuning config, and leaderboard api t
   - `physicsStepsFor(elapsedMs: number): number`
   - `resolveMerges(pairs: CollisionPair[]): MergeResult` (stateless helper used by `applyMerges`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `src/client/game.test.ts`:
 
@@ -526,12 +526,12 @@ test('reset returns to a fresh ready state with zero score', () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `node --experimental-strip-types --no-warnings=ExperimentalWarning --test src/client/game.test.ts`
 Expected: FAIL, cannot find module `./game.ts`.
 
-- [ ] **Step 3: Implement game.ts**
+- [x] **Step 3: Implement game.ts**
 
 ```ts
 import {
@@ -666,12 +666,12 @@ export class Game {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `node --experimental-strip-types --no-warnings=ExperimentalWarning --test src/client/game.test.ts`
 Expected: all 13 tests PASS. Then `npm test` for types and lint.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run format
@@ -694,7 +694,7 @@ git commit -m "feat: add pure game rules for merging, scoring, cooldown, and gam
   - `class Physics` with `spawn(tier, x, y, velocityY = 0): number`, `remove(id): void`, `step(dtMs): CollisionPair[]`, `bodies(): PhysicsBody[]`, `clear(): void`.
   - `step` returns the collision pairs between two dynamic animal bodies that started during that step. Walls are never included.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `src/client/physics.test.ts`:
 
@@ -747,12 +747,12 @@ test('remove and clear drop bodies from the world', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --experimental-strip-types --no-warnings=ExperimentalWarning --test src/client/physics.test.ts`
 Expected: FAIL, cannot find module `./physics.ts`.
 
-- [ ] **Step 3: Implement physics.ts**
+- [x] **Step 3: Implement physics.ts**
 
 ```ts
 import Matter from 'matter-js'
@@ -841,12 +841,12 @@ function toInfo(body: Matter.Body): BodyInfo | undefined {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `node --experimental-strip-types --no-warnings=ExperimentalWarning --test src/client/physics.test.ts`
 Expected: 4 PASS. If the resting-y test fails by a few units, widen the tolerance in the assertion to 10 rather than tuning physics. Then `npm test`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run format
@@ -871,7 +871,7 @@ git commit -m "feat: add matter-js physics wrapper with animal collision reporti
 
 Devvit Redis facts verified against `@devvit/redis` 0.14.5 types: `zAdd(key, ...members: {member: string; score: number}[]): Promise<number>`, `zRange(key, start, stop, {by: 'rank', reverse: true}): Promise<{member: string; score: number}[]>`, `zScore(key, member): Promise<number | undefined>`, `zRank(key, member): Promise<number | undefined>` (ascending), `zCard(key): Promise<number>`. There is no `zRevRank`, so descending rank is `zCard - 1 - zRank`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `src/server/server.test.ts`:
 
@@ -1032,12 +1032,12 @@ test('unknown routes and wrong methods are 404', async () => {
 })
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `node --experimental-strip-types --no-warnings=ExperimentalWarning --test src/server/server.test.ts`
 Expected: FAIL, the leaderboard route returns 404 and `db.ts` exports nothing.
 
-- [ ] **Step 3: Implement db.ts**
+- [x] **Step 3: Implement db.ts**
 
 ```ts
 import {redis} from '@devvit/web/server'
@@ -1083,7 +1083,7 @@ export async function dbGetLeaderboard(
 }
 ```
 
-- [ ] **Step 4: Add the two routes to server.ts**
+- [x] **Step 4: Add the two routes to server.ts**
 
 Add imports at the top of `src/server/server.ts`:
 
@@ -1154,12 +1154,12 @@ async function readJson<T>(reqMsg: IncomingMessage): Promise<T | undefined> {
 
 Note the `default:` branch keeps `endpoint satisfies never` from the template if the exhaustive check type-checks; otherwise leave the plain 404.
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `node --experimental-strip-types --no-warnings=ExperimentalWarning --test src/server/server.test.ts`
 Expected: 8 PASS. Then `npm test` for the full suite.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 npm run format
@@ -1179,7 +1179,7 @@ git commit -m "feat: add per-post leaderboard endpoints backed by a redis sorted
 - Consumes: `Endpoint` from `src/shared/api.ts`, `LeaderboardRsp`, `MAX_SCORE`, `LEADERBOARD_SIZE`.
 - Produces: `npm run dev:local` serves `public/` at `http://localhost:8787` and fakes both API routes in memory with username `local-player`.
 
-- [ ] **Step 1: Write the script**
+- [x] **Step 1: Write the script**
 
 `scripts/local-server.ts`:
 
@@ -1277,7 +1277,7 @@ createServer((req, rsp) => {
 }).listen(PORT, () => console.log(`local game at http://localhost:${PORT}`))
 ```
 
-- [ ] **Step 2: Add npm scripts**
+- [x] **Step 2: Add npm scripts**
 
 In `package.json` `scripts`, add:
 
@@ -1285,7 +1285,7 @@ In `package.json` `scripts`, add:
 "dev:local": "sh -c 'trap \"kill 0\" exit; npm run build:client -- --watch=forever& node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/local-server.ts& wait' --",
 ```
 
-- [ ] **Step 3: Verify it serves and fakes the API**
+- [x] **Step 3: Verify it serves and fakes the API**
 
 Run in background: `npm run dev:local`
 Then:
@@ -1299,12 +1299,12 @@ curl -s -o /dev/null -w '%{http_code}\n' localhost:8787/
 
 Expected: first returns the two seeded entries with no `me`; second returns `local-player` at rank 1 with 999; the PNG and `/` return 200. Stop the server.
 
-- [ ] **Step 4: Lint and type check**
+- [x] **Step 4: Lint and type check**
 
 Run: `npm test`
 Expected: PASS. `tsc --build` does not include `scripts/`, so the file is only linted. If Biome flags `import.meta.dirname`, that is a Node 20.11+ API and fine; disable the rule inline only if it blocks.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 npm run format
@@ -1329,7 +1329,7 @@ git commit -m "feat: add local dev server that fakes the leaderboard api"
 
 These are browser-only modules and are verified visually in Task 8. Keep them free of game logic so that the tested `game.ts` stays the single source of rules.
 
-- [ ] **Step 1: Write render.ts**
+- [x] **Step 1: Write render.ts**
 
 ```ts
 import {DANGER_Y, DROP_Y, WORLD} from '../shared/config.ts'
@@ -1483,7 +1483,7 @@ export class Renderer {
 }
 ```
 
-- [ ] **Step 2: Write input.ts**
+- [x] **Step 2: Write input.ts**
 
 ```ts
 export type InputHandlers = {
@@ -1519,12 +1519,12 @@ export function attachInput(
 }
 ```
 
-- [ ] **Step 3: Type check and lint**
+- [x] **Step 3: Type check and lint**
 
 Run: `npm run test:types && npm run lint`
 Expected: clean. The client tsconfig has the DOM lib.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 npm run format
@@ -1544,7 +1544,7 @@ git commit -m "feat: add canvas renderer and pointer input for the game client"
 - Consumes: `Game`, `clampDropX`, `physicsStepsFor` from `./game.ts`; `Physics` from `./physics.ts`; `Renderer`, `loadSprites` from `./render.ts`; `attachInput` from `./input.ts`; `Endpoint`, `LeaderboardRsp`, `SubmitScoreReq` from `../shared/api.ts`; `DROP_Y`, `PHYSICS_STEP_MS`, `MERGE_POP_VELOCITY`, `DANGER_Y` from `../shared/config.ts`.
 - Produces: a playable game at `npm run dev:local`.
 
-- [ ] **Step 1: Write api.ts**
+- [x] **Step 1: Write api.ts**
 
 ```ts
 import {
@@ -1592,7 +1592,7 @@ async function request(
 }
 ```
 
-- [ ] **Step 2: Write game.html**
+- [x] **Step 2: Write game.html**
 
 ```html
 <!doctype html>
@@ -1671,7 +1671,7 @@ async function request(
 </html>
 ```
 
-- [ ] **Step 3: Write main.ts**
+- [x] **Step 3: Write main.ts**
 
 ```ts
 import type {LeaderboardRsp} from '../shared/api.ts'
@@ -1805,7 +1805,7 @@ void init()
 
 Biome's formatter and import sorter will flag anything left over.
 
-- [ ] **Step 4: Build and play locally**
+- [x] **Step 4: Build and play locally**
 
 Run in background: `npm run dev:local`. Open `http://localhost:8787` in a browser (or use the harness preview tools). Check:
 
@@ -1818,7 +1818,7 @@ Run in background: `npm run dev:local`. Open `http://localhost:8787` in a browse
 
 Fix anything broken before committing. If sprites look too large or small relative to the physics circle, adjust only the sprite scale in `render.ts`, not the radii.
 
-- [ ] **Step 5: Full check and commit**
+- [x] **Step 5: Full check and commit**
 
 Run: `npm test`
 Expected: PASS.
@@ -1840,7 +1840,7 @@ git commit -m "feat: wire physics, rules, renderer, and leaderboard into a playa
 **Interfaces:**
 - Produces: a splash that shows the whale sprite and a "Play" button; a README with local dev, Devvit onboarding, and the manual test checklist.
 
-- [ ] **Step 1: Update splash.html**
+- [x] **Step 1: Update splash.html**
 
 Replace the `<main>` contents with:
 
@@ -1866,11 +1866,11 @@ And add to the style block:
 git rm -q public/snoo.png
 ```
 
-- [ ] **Step 2: Update devvit.json menu copy**
+- [x] **Step 2: Update devvit.json menu copy**
 
 Change the menu item to `"label": "[Animal Merge] New game post"` and `"description": "Create a new Animal Merge game post."`.
 
-- [ ] **Step 3: Write README.md**
+- [x] **Step 3: Write README.md**
 
 ```bash
 git mv readme.md README.md
@@ -1939,11 +1939,11 @@ Animal art: [Kenney Animal Pack Redux](https://kenney.nl/assets/animal-pack),
 CC0. Physics: [Matter.js](https://brm.io/matter-js/).
 ````
 
-- [ ] **Step 4: Build and check the splash renders**
+- [x] **Step 4: Build and check the splash renders**
 
 Run: `npm run build` then open `public/splash.html` via the local server at `http://localhost:8787/splash.html`. The whale and Play button show. Clicking Play outside Reddit does nothing, which is expected because `requestExpandedMode` needs the Reddit host.
 
-- [ ] **Step 5: Full check and commit**
+- [x] **Step 5: Full check and commit**
 
 Run: `npm test`
 Expected: PASS.
