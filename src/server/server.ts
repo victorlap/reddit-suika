@@ -1,27 +1,13 @@
-import {once} from 'node:events'
 import type {IncomingMessage, ServerResponse} from 'node:http'
-import {context, reddit} from '@devvit/web/server'
+import {reddit} from '@devvit/web/server'
 import type {
   PartialJsonValue,
   TriggerResponse,
   UiResponse,
 } from '@devvit/web/shared'
-import {
-  Endpoint,
-  EndpointMethod,
-  type ErrorRsp,
-  type GetCounterRsp,
-  type IncCounterReq,
-  type IncCounterRsp,
-} from '../shared/api.ts'
-import {dbGetCounter, dbIncCounter} from './db.ts'
+import {Endpoint, EndpointMethod, type ErrorRsp} from '../shared/api.ts'
 
-type AnyRsp =
-  | GetCounterRsp
-  | IncCounterRsp
-  | UiResponse
-  | TriggerResponse
-  | ErrorRsp
+type AnyRsp = UiResponse | TriggerResponse | ErrorRsp
 
 export async function onReq(
   reqMsg: IncomingMessage,
@@ -48,12 +34,6 @@ async function route(
     rsp = {error: 'not found', status: 404}
   } else {
     switch (endpoint) {
-      case Endpoint.GetCounter:
-        rsp = await routeGetCounter()
-        break
-      case Endpoint.IncCounter:
-        rsp = await routeInc(reqMsg)
-        break
       case Endpoint.OnMenuNewPost:
         rsp = await routeMenuNewPost()
         break
@@ -61,7 +41,6 @@ async function route(
         rsp = await routeAppInstall()
         break
       default:
-        endpoint satisfies never
         rsp = {error: 'not found', status: 404}
         break
     }
@@ -70,21 +49,8 @@ async function route(
   writeJson<PartialJsonValue>('status' in rsp ? rsp.status : 200, rsp, rspMsg)
 }
 
-async function routeGetCounter(): Promise<GetCounterRsp> {
-  const t3 = context.postId
-  if (!t3) throw Error('no t3')
-  return {count: await dbGetCounter(t3)}
-}
-
-async function routeInc(reqMsg: IncomingMessage): Promise<IncCounterRsp> {
-  const t3 = context.postId
-  if (!t3) throw Error('no t3')
-  const req = await readJson<IncCounterReq>(reqMsg)
-  return {count: await dbIncCounter(t3, req.amount)}
-}
-
 async function routeMenuNewPost(): Promise<UiResponse> {
-  const post = await reddit.submitCustomPost({title: context.appSlug})
+  const post = await reddit.submitCustomPost({title: 'Animal Merge'})
   return {
     showToast: {text: `Post ${post.id} created.`, appearance: 'success'},
     navigateTo: post.url,
@@ -92,18 +58,11 @@ async function routeMenuNewPost(): Promise<UiResponse> {
 }
 
 async function routeAppInstall(): Promise<TriggerResponse> {
-  await reddit.submitCustomPost({title: context.appSlug})
+  await reddit.submitCustomPost({title: 'Animal Merge'})
   return {}
 }
 
-async function readJson<T>(reqMsg: IncomingMessage): Promise<T> {
-  const chunks: Uint8Array[] = []
-  reqMsg.on('data', chunk => chunks.push(chunk))
-  await once(reqMsg, 'end')
-  return JSON.parse(`${Buffer.concat(chunks)}`)
-}
-
-function writeJson<T extends PartialJsonValue>(
+export function writeJson<T extends PartialJsonValue>(
   status: number,
   json: Readonly<T>,
   rsp: ServerResponse,
