@@ -102,7 +102,7 @@ async function readJson<T>(reqMsg: IncomingMessage): Promise<T | undefined> {
 }
 
 async function routeMenuNewPost(): Promise<UiResponse> {
-  const post = await reddit.submitCustomPost({title: 'Animal Merge'})
+  const post = await reddit.submitCustomPost({title: 'Pile Kingdom'})
   return {
     showToast: {text: `Post ${post.id} created.`, appearance: 'success'},
     navigateTo: post.url,
@@ -110,7 +110,7 @@ async function routeMenuNewPost(): Promise<UiResponse> {
 }
 
 async function routeAppInstall(): Promise<TriggerResponse> {
-  await reddit.submitCustomPost({title: 'Animal Merge'})
+  await reddit.submitCustomPost({title: 'Pile Kingdom'})
   return {}
 }
 

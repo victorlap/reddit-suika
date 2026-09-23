@@ -1,6 +1,6 @@
-# Animal Merge
+# Pile Kingdom
 
-A Suika-style drop-and-merge game for Reddit, built on Devvit. Drop animals into
+Have a whale of a pile. A Suika-style drop-and-merge game for Reddit, built on Devvit. Drop animals into
 the pen; two of the same kind merge into the next bigger animal. Each game post
 keeps its own top-10 leaderboard.
 
@@ -24,7 +24,7 @@ Open http://localhost:8787. The leaderboard is faked in memory under the name
 3. `npx devvit login`
 4. `npm run playtest r/<your-test-sub>` builds, uploads, and installs the app,
    then rebuilds on every change.
-5. In the subreddit, open the mod menu and pick "[Animal Merge] New game post".
+5. In the subreddit, open the mod menu and pick "[Pile Kingdom] New game post".
 
 ## Commands
 

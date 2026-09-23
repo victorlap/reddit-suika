@@ -49,7 +49,7 @@ before(async () => {
   server = createServer(async (req, rsp) => {
     await runWithContext(
       {
-        appName: 'animal-merge',
+        appName: 'pile-kingdom',
         postId: 't3_123',
         userId: username ? 't2_123' : undefined,
         username,

@@ -15,8 +15,8 @@
   "menu": {
     "items": [
       {
-        "label": "[Animal Merge] New game post",
-        "description": "Create a new Animal Merge game post.",
+        "label": "[Pile Kingdom] New game post",
+        "description": "Create a new Pile Kingdom game post.",
         "location": "subreddit",
         "endpoint": "/internal/on/menu/new-post"
       }
