@@ -1,13 +1,22 @@
+import {once} from 'node:events'
 import type {IncomingMessage, ServerResponse} from 'node:http'
-import {reddit} from '@devvit/web/server'
+import {context, reddit} from '@devvit/web/server'
 import type {
   PartialJsonValue,
   TriggerResponse,
   UiResponse,
 } from '@devvit/web/shared'
-import {Endpoint, EndpointMethod, type ErrorRsp} from '../shared/api.ts'
+import {
+  Endpoint,
+  EndpointMethod,
+  type ErrorRsp,
+  type LeaderboardRsp,
+  type SubmitScoreReq,
+} from '../shared/api.ts'
+import {MAX_SCORE} from '../shared/config.ts'
+import {dbGetLeaderboard, dbSubmitScore} from './db.ts'
 
-type AnyRsp = UiResponse | TriggerResponse | ErrorRsp
+type AnyRsp = LeaderboardRsp | UiResponse | TriggerResponse | ErrorRsp
 
 export async function onReq(
   reqMsg: IncomingMessage,
@@ -34,6 +43,12 @@ async function route(
     rsp = {error: 'not found', status: 404}
   } else {
     switch (endpoint) {
+      case Endpoint.GetLeaderboard:
+        rsp = await routeGetLeaderboard()
+        break
+      case Endpoint.SubmitScore:
+        rsp = await routeSubmitScore(reqMsg)
+        break
       case Endpoint.OnMenuNewPost:
         rsp = await routeMenuNewPost()
         break
@@ -47,6 +62,43 @@ async function route(
   }
 
   writeJson<PartialJsonValue>('status' in rsp ? rsp.status : 200, rsp, rspMsg)
+}
+
+async function routeGetLeaderboard(): Promise<LeaderboardRsp> {
+  const t3 = context.postId
+  if (!t3) throw Error('no t3')
+  return dbGetLeaderboard(t3, context.username)
+}
+
+async function routeSubmitScore(
+  reqMsg: IncomingMessage,
+): Promise<LeaderboardRsp | ErrorRsp> {
+  const t3 = context.postId
+  if (!t3) throw Error('no t3')
+  const username = context.username
+  if (!username) return {error: 'sign in to post a score', status: 401}
+  const req = await readJson<Partial<SubmitScoreReq>>(reqMsg)
+  const score = req?.score
+  if (
+    typeof score !== 'number' ||
+    !Number.isInteger(score) ||
+    score < 0 ||
+    score > MAX_SCORE
+  )
+    return {error: 'invalid score', status: 400}
+  await dbSubmitScore(t3, username, score)
+  return dbGetLeaderboard(t3, username)
+}
+
+async function readJson<T>(reqMsg: IncomingMessage): Promise<T | undefined> {
+  const chunks: Uint8Array[] = []
+  reqMsg.on('data', chunk => chunks.push(chunk))
+  await once(reqMsg, 'end')
+  try {
+    return JSON.parse(`${Buffer.concat(chunks)}`) as T
+  } catch {
+    return
+  }
 }
 
 async function routeMenuNewPost(): Promise<UiResponse> {
