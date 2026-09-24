@@ -87,7 +87,6 @@ export class Game {
   applyMerges(pairs: readonly CollisionPair[]): MergeResult {
     const result = resolveMerges(pairs)
     this.score += result.scoreDelta
-    for (const id of result.remove) this.#aboveSince.delete(id)
     return result
   }
 
@@ -98,17 +97,18 @@ export class Game {
     for (const b of bodies) {
       if (b.y >= DANGER_Y) continue
       seen.add(b.id)
+      // Bodies still in the drop cooldown window are not tracked yet, so the
+      // above-line timer only starts once the cooldown has elapsed.
+      const justDropped =
+        this.#lastDrop?.id === b.id &&
+        nowMs - this.#lastDrop.atMs < DROP_COOLDOWN_MS
+      if (justDropped) continue
       const since = this.#aboveSince.get(b.id)
       if (since === undefined) {
         this.#aboveSince.set(b.id, nowMs)
-      } else {
-        const justDropped =
-          this.#lastDrop?.id === b.id &&
-          nowMs - this.#lastDrop.atMs < DROP_COOLDOWN_MS
-        if (!justDropped && nowMs - since >= GAME_OVER_GRACE_MS) {
-          this.phase = 'over'
-          return true
-        }
+      } else if (nowMs - since >= GAME_OVER_GRACE_MS) {
+        this.phase = 'over'
+        return true
       }
     }
     for (const id of this.#aboveSince.keys())

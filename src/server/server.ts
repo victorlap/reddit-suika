@@ -1,4 +1,3 @@
-import {once} from 'node:events'
 import type {IncomingMessage, ServerResponse} from 'node:http'
 import {context, reddit} from '@devvit/web/server'
 import type {
@@ -7,6 +6,7 @@ import type {
   UiResponse,
 } from '@devvit/web/shared'
 import {
+  type ChallengeRsp,
   Endpoint,
   EndpointMethod,
   type ErrorRsp,
@@ -14,9 +14,20 @@ import {
   type SubmitScoreReq,
 } from '../shared/api.ts'
 import {MAX_SCORE} from '../shared/config.ts'
-import {dbGetLeaderboard, dbSubmitScore} from './db.ts'
+import {
+  dbClaimChallenge,
+  dbGetLeaderboard,
+  dbGetScore,
+  dbReleaseChallenge,
+  dbSubmitScore,
+} from './db.ts'
 
-type AnyRsp = LeaderboardRsp | UiResponse | TriggerResponse | ErrorRsp
+type AnyRsp =
+  | LeaderboardRsp
+  | ChallengeRsp
+  | UiResponse
+  | TriggerResponse
+  | ErrorRsp
 
 export async function onReq(
   reqMsg: IncomingMessage,
@@ -48,6 +59,9 @@ async function route(
         break
       case Endpoint.SubmitScore:
         rsp = await routeSubmitScore(reqMsg)
+        break
+      case Endpoint.CreateChallenge:
+        rsp = await routeCreateChallenge()
         break
       case Endpoint.OnMenuNewPost:
         rsp = await routeMenuNewPost()
@@ -90,10 +104,94 @@ async function routeSubmitScore(
   return dbGetLeaderboard(t3, username)
 }
 
+async function routeCreateChallenge(): Promise<ChallengeRsp | ErrorRsp> {
+  const t3 = context.postId
+  if (!t3) throw Error('no t3')
+  const username = context.username
+  if (!username) return {error: 'sign in to post a challenge', status: 401}
+  const score = await dbGetScore(t3, username)
+  if (score === undefined) return {error: 'no score to share yet', status: 400}
+  const claimed = await dbClaimChallenge(t3, username)
+  if (!claimed)
+    return {
+      error: 'you already made a challenge from this post',
+      status: 409,
+    }
+  let post: Awaited<ReturnType<typeof reddit.submitCustomPost>>
+  try {
+    post = await reddit.submitCustomPost({
+      subredditName: context.subredditName,
+      title: `${username} piled up ${score} in Pile Kingdom — can you beat it?`,
+      runAs: 'USER',
+      userGeneratedContent: {
+        text: `I scored ${score} in Pile Kingdom. Beat it.`,
+      },
+      postData: {challenger: username, target: score},
+      textFallback: {
+        text: `${username} scored ${score} in Pile Kingdom. Open this post on a supported client to play.`,
+      },
+    })
+  } catch (err) {
+    try {
+      await dbReleaseChallenge(t3, username)
+    } catch (releaseErr) {
+      console.error(
+        `failed to release challenge slot; ${releaseErr instanceof Error ? releaseErr.stack : releaseErr}`,
+      )
+    }
+    throw err
+  }
+  try {
+    await dbSubmitScore(post.id, username, score)
+  } catch (err) {
+    console.error(
+      `failed to seed challenge post leaderboard; ${err instanceof Error ? err.stack : err}`,
+    )
+  }
+  return {ok: true, score, postUrl: post.url}
+}
+
+const MAX_JSON_BODY_BYTES = 8 * 1024
+
 async function readJson<T>(reqMsg: IncomingMessage): Promise<T | undefined> {
   const chunks: Uint8Array[] = []
-  reqMsg.on('data', chunk => chunks.push(chunk))
-  await once(reqMsg, 'end')
+  let size = 0
+  let tooLarge = false
+  try {
+    await new Promise<void>((resolve, reject) => {
+      let done = false
+      reqMsg.on('data', (chunk: Buffer) => {
+        size += chunk.length
+        if (size > MAX_JSON_BODY_BYTES) {
+          // Stop buffering but keep draining: the stream must still reach
+          // 'end' so the remaining bytes are fully consumed off the socket,
+          // otherwise a pipelined keep-alive request could be desynced by
+          // data we never read. (Destroying the request here would also
+          // destroy the underlying socket, so it never sends the response.)
+          tooLarge = true
+          return
+        }
+        chunks.push(chunk)
+      })
+      reqMsg.on('end', () => {
+        done = true
+        if (tooLarge) reject(Error('request body too large'))
+        else resolve()
+      })
+      reqMsg.on('error', err => {
+        done = true
+        reject(err)
+      })
+      // 'aborted' is soft-deprecated; 'close' is the documented replacement.
+      // It also fires after a normal completed request, so only treat it as
+      // an abort if the promise has not already settled.
+      reqMsg.on('close', () => {
+        if (!done) reject(Error('request aborted'))
+      })
+    })
+  } catch {
+    return
+  }
   try {
     return JSON.parse(`${Buffer.concat(chunks)}`) as T
   } catch {

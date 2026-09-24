@@ -11,10 +11,14 @@ export type LeaderboardRsp = {
 
 export type SubmitScoreReq = {score: number}
 
+/** Returned when a challenge post is created from the player's stored score. */
+export type ChallengeRsp = {ok: true; score: number; postUrl: string}
+
 export type Endpoint = (typeof Endpoint)[keyof typeof Endpoint]
 export const Endpoint = {
   GetLeaderboard: 'api/leaderboard',
   SubmitScore: 'api/score',
+  CreateChallenge: 'api/challenge',
   OnAppInstall: 'internal/on/app/install',
   OnMenuNewPost: 'internal/on/menu/new-post',
 } as const
@@ -22,6 +26,7 @@ export const Endpoint = {
 export const EndpointMethod = {
   [Endpoint.GetLeaderboard]: 'GET',
   [Endpoint.SubmitScore]: 'POST',
+  [Endpoint.CreateChallenge]: 'POST',
   [Endpoint.OnAppInstall]: 'POST',
   [Endpoint.OnMenuNewPost]: 'POST',
 } as const satisfies {[endpoint: string]: 'GET' | 'POST'}

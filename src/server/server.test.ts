@@ -2,22 +2,35 @@ import assert from 'node:assert/strict'
 import {createServer} from 'node:http'
 import type {AddressInfo, Server} from 'node:net'
 import {after, before, beforeEach, test} from 'node:test'
-import {type Context, redis, runWithContext} from '@devvit/web/server'
-import {Endpoint, type LeaderboardRsp} from '../shared/api.ts'
+import {type Context, reddit, redis, runWithContext} from '@devvit/web/server'
+import {
+  type ChallengeRsp,
+  Endpoint,
+  type LeaderboardRsp,
+} from '../shared/api.ts'
 import {onReq} from './server.ts'
 
 let server: Server
 let serverURL: string
 /** key -> member -> score */
 const sets = new Map<string, Map<string, number>>()
+/** key -> field -> value */
+const hashes = new Map<string, Map<string, string>>()
 const original = {
   zAdd: redis.zAdd,
   zRange: redis.zRange,
   zScore: redis.zScore,
   zRank: redis.zRank,
   zCard: redis.zCard,
+  hSetNX: redis.hSetNX,
+  hDel: redis.hDel,
 }
+const originalReddit = {submitCustomPost: reddit.submitCustomPost}
 let username: string | undefined = 'alice'
+type SubmitCustomPostOpts = Parameters<typeof reddit.submitCustomPost>[0]
+let submitCustomPostCalls: SubmitCustomPostOpts[] = []
+let submitCustomPostShouldFail = false
+let zAddShouldFailFor: string | undefined
 
 function sorted(key: string): {member: string; score: number}[] {
   return [...(sets.get(key) ?? new Map()).entries()]
@@ -27,6 +40,7 @@ function sorted(key: string): {member: string; score: number}[] {
 
 before(async () => {
   redis.zAdd = async (key, ...members) => {
+    if (key === zAddShouldFailFor) throw Error('zAdd failed')
     const set = sets.get(key) ?? new Map<string, number>()
     for (const m of members) set.set(m.member, m.score)
     sets.set(key, set)
@@ -45,6 +59,28 @@ before(async () => {
     return i === -1 ? undefined : i
   }
   redis.zCard = async key => sets.get(key)?.size ?? 0
+  redis.hSetNX = async (key, field, value) => {
+    const h = hashes.get(key) ?? new Map<string, string>()
+    if (h.has(field)) return 0
+    h.set(field, value)
+    hashes.set(key, h)
+    return 1
+  }
+  redis.hDel = async (key, fields) => {
+    const h = hashes.get(key)
+    if (!h) return 0
+    let deleted = 0
+    for (const f of fields) if (h.delete(f)) deleted++
+    return deleted
+  }
+  reddit.submitCustomPost = (async opts => {
+    submitCustomPostCalls.push(opts)
+    if (submitCustomPostShouldFail) throw Error('submitCustomPost failed')
+    return {
+      id: 't3_new',
+      url: 'https://reddit.com/r/test/comments/new',
+    } as unknown as Awaited<ReturnType<typeof reddit.submitCustomPost>>
+  }) as typeof reddit.submitCustomPost
 
   server = createServer(async (req, rsp) => {
     await runWithContext(
@@ -66,6 +102,7 @@ before(async () => {
 
 after(async () => {
   Object.assign(redis, original)
+  Object.assign(reddit, originalReddit)
   if (!server.listening) return
   await new Promise<void>((resolve, reject) => {
     server.close(err => (err ? reject(err) : resolve()))
@@ -74,6 +111,10 @@ after(async () => {
 
 beforeEach(() => {
   sets.clear()
+  hashes.clear()
+  submitCustomPostCalls = []
+  submitCustomPostShouldFail = false
+  zAddShouldFailFor = undefined
   username = 'alice'
 })
 
@@ -82,6 +123,14 @@ async function submit(score: unknown): Promise<Response> {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({score}),
+  })
+}
+
+async function challenge(body: unknown = {}): Promise<Response> {
+  return fetch(`${serverURL}/${Endpoint.CreateChallenge}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
   })
 }
 
@@ -154,4 +203,69 @@ test('malformed scores are rejected and nothing is stored', async () => {
 test('unknown routes and wrong methods are 404', async () => {
   const rsp = await fetch(`${serverURL}/${Endpoint.SubmitScore}`)
   assert.equal(rsp.status, 404)
+})
+
+test("a challenge post carries the player's stored score, not a client-supplied one", async () => {
+  await submit(120)
+  const rsp = await challenge({score: 99999})
+  assert.equal(rsp.status, 200)
+  const body = (await rsp.json()) as ChallengeRsp
+  assert.equal(body.score, 120)
+  assert.equal(submitCustomPostCalls.length, 1)
+  const call = submitCustomPostCalls[0]
+  assert.equal(call?.runAs, 'USER')
+  assert.match(call?.title ?? '', /120/)
+  assert.deepEqual(call?.postData, {challenger: 'alice', target: 120})
+})
+
+test("the challenger is seeded onto the new post's board so it is never empty", async () => {
+  await submit(120)
+  await challenge()
+  assert.deepEqual(sorted('lb:t3_new'), [{member: 'alice', score: 120}])
+})
+
+// This calls sequentially, so it proves hSetNX's refusal, not its atomicity
+// under concurrent requests.
+test('a second challenge from the same post is refused so the subreddit is not flooded', async () => {
+  await submit(120)
+  const first = await challenge()
+  assert.equal(first.status, 200)
+  const second = await challenge()
+  assert.equal(second.status, 409)
+  assert.equal(submitCustomPostCalls.length, 1)
+})
+
+test('a player with no score cannot post a challenge', async () => {
+  const rsp = await challenge()
+  assert.equal(rsp.status, 400)
+  assert.equal(submitCustomPostCalls.length, 0)
+})
+
+test('anonymous visitors cannot post a challenge', async () => {
+  username = undefined
+  const rsp = await challenge()
+  assert.equal(rsp.status, 401)
+  assert.equal(submitCustomPostCalls.length, 0)
+})
+
+test('a failed post creation releases the slot so the player can retry', async () => {
+  await submit(120)
+  submitCustomPostShouldFail = true
+  const failed = await challenge()
+  assert.equal(failed.status, 500)
+  submitCustomPostShouldFail = false
+  const retried = await challenge()
+  assert.equal(retried.status, 200)
+  assert.equal(submitCustomPostCalls.length, 2)
+})
+
+test('a failure seeding the new post still succeeds, since the post itself was already created', async () => {
+  await submit(120)
+  zAddShouldFailFor = 'lb:t3_new'
+  const rsp = await challenge()
+  assert.equal(rsp.status, 200)
+  const body = (await rsp.json()) as ChallengeRsp
+  assert.equal(body.ok, true)
+  assert.equal(body.postUrl, 'https://reddit.com/r/test/comments/new')
+  assert.deepEqual(sorted('lb:t3_new'), [])
 })

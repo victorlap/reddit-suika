@@ -17,11 +17,16 @@ export async function loadSprites(): Promise<Map<number, HTMLImageElement>> {
     TIERS.map(async t => {
       const img = new Image()
       img.src = `animals/${t.name}.png`
-      await img.decode()
+      try {
+        await img.decode()
+      } catch (err) {
+        console.error(`failed to load sprite for tier ${t.tier}:`, err)
+        return undefined
+      }
       return [t.tier, img] as const
     }),
   )
-  return new Map(entries)
+  return new Map(entries.filter(e => e !== undefined))
 }
 
 export class Renderer {
@@ -31,6 +36,7 @@ export class Renderer {
   #scale = 1
   #offsetX = 0
   #offsetY = 0
+  #rect: DOMRect
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -41,12 +47,14 @@ export class Renderer {
     if (!ctx) throw Error('no 2d context')
     this.#ctx = ctx
     this.#sprites = sprites
+    this.#rect = canvas.getBoundingClientRect()
     this.resize()
   }
 
   /** Fit the 400x600 world into the canvas's CSS box, centred, HiDPI aware. */
   resize(): void {
-    const rect = this.#canvas.getBoundingClientRect()
+    this.#rect = this.#canvas.getBoundingClientRect()
+    const rect = this.#rect
     const dpr = window.devicePixelRatio || 1
     this.#canvas.width = Math.round(rect.width * dpr)
     this.#canvas.height = Math.round(rect.height * dpr)
@@ -58,13 +66,18 @@ export class Renderer {
 
   /** CSS pixel x (clientX) to world x. */
   toWorldX(clientX: number): number {
+    // Read the rect fresh rather than using the cache: left/top are
+    // viewport-relative and go stale on scroll, unlike the cached
+    // width/height/scale/offsets that draw() uses. This only runs on
+    // pointer moves, not every frame, so it doesn't reintroduce the
+    // per-frame getBoundingClientRect() cost that resize() caching fixed.
     const rect = this.#canvas.getBoundingClientRect()
     return (clientX - rect.left - this.#offsetX) / this.#scale
   }
 
   draw(scene: Scene): void {
     const ctx = this.#ctx
-    const rect = this.#canvas.getBoundingClientRect()
+    const rect = this.#rect
     ctx.save()
     ctx.clearRect(0, 0, rect.width, rect.height)
     ctx.fillStyle = '#1f2430'

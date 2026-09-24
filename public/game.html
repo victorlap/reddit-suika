@@ -70,6 +70,12 @@
       margin: 0 0 12px;
       font-size: 14px;
     }
+    #actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
     #again {
       font: inherit;
       font-weight: 700;
@@ -79,6 +85,24 @@
       background: #e07a3a;
       color: #fff;
       cursor: pointer;
+    }
+    #challenge {
+      font: inherit;
+      font-weight: 700;
+      padding: 10px 22px;
+      border: 2px solid #e07a3a;
+      border-radius: 999px;
+      background: transparent;
+      color: #e07a3a;
+      cursor: pointer;
+    }
+    #challenge:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    #challenge-msg {
+      margin: 10px 0 0;
+      font-size: 13px;
     }
     </style>
   </head>
@@ -90,7 +114,11 @@
         <div id="final">0</div>
         <ol id="board"></ol>
         <p id="me"></p>
-        <button id="again" type="button">Play again</button>
+        <div id="actions">
+          <button id="again" type="button">Play again</button>
+          <button id="challenge" type="button">Challenge the subreddit</button>
+        </div>
+        <p id="challenge-msg"></p>
       </div>
     </div>
     <script src="main.js" type="module"></script>
