@@ -61,7 +61,7 @@ function page(
 // Reddit shows desktop banners at 8.375:1 (its stated floor is 1072x128), so
 // this renders three times that. The heap runs long and low rather than tall:
 // a taller cluster would just get cropped away at that aspect.
-function banner(): string {
+function bannerDesktop(): string {
   const css = `
     .mound {position: absolute; left: -500px; bottom: -300px; width: 4400px; height: 380px; border-radius: 50%; background: ${MOUND};}
     .word {position: absolute; left: 500px; top: 50%; transform: translateY(-50%);}
@@ -97,6 +97,33 @@ function banner(): string {
     <div class='word'><h1>PILE KINGDOM</h1><div class='bar'></div><p>Have a whale of a pile.</p></div>
     ${heap}${crown(110)}`
   return page(3216, 384, css, body)
+}
+
+// Mobile's floor is 1080x128 -- all but the same shape as desktop, so the cut
+// differs by weight, not proportion. It lands about 1080px wide on a phone
+// against a desktop banner's full monitor width, so the tagline would shrink
+// past reading and eight animals would turn to mush. Fewer, bigger, bolder.
+function bannerMobile(): string {
+  const css = `
+    .mound {position: absolute; left: -500px; bottom: -300px; width: 4400px; height: 380px; border-radius: 50%; background: ${MOUND};}
+    .word {position: absolute; left: 400px; top: 50%; transform: translateY(-50%);}
+    h1 {margin: 0; font-size: 155px; line-height: 1; letter-spacing: 1px; color: ${BROWN};}
+    .bar {width: 180px; height: 16px; border-radius: 8px; background: ${ORANGE}; margin: 28px 0 0;}
+    .cow {left: 1900px; bottom: 24px; height: 175px; transform: rotate(-3deg);}
+    .rabbit {left: 2070px; bottom: 26px; height: 190px; transform: rotate(-5deg);}
+    .penguin {left: 2420px; bottom: 26px; height: 200px; transform: rotate(3deg);}
+    .pig {left: 2615px; bottom: 24px; height: 185px; transform: rotate(-2deg);}
+    .whale {left: 2170px; bottom: 24px; height: 300px;}
+    .crown {left: 2206px; top: 82px; transform: rotate(-16deg);}`
+  // Neighbours are kept apart in hue as well as space: two greys side by side
+  // merge into one shape once this is down at phone size.
+  const heap = ['cow', 'rabbit', 'penguin', 'pig', 'whale']
+    .map(name => `<img class='${name}' src='${sprite(name)}' alt=''>`)
+    .join('')
+  const body = `<div class='mound'></div>
+    <div class='word'><h1>PILE KINGDOM</h1><div class='bar'></div></div>
+    ${heap}${crown(110)}`
+  return page(3240, 384, css, body)
 }
 
 function icon(): string {
@@ -160,8 +187,10 @@ async function shoot(
 
 const only = process.argv[2]
 mkdirSync(OUT, {recursive: true})
-if (!only || only === 'banner')
-  await shoot(banner(), 'banner-3216x384.png', 3216, 384)
+if (!only || only === 'banner') {
+  await shoot(bannerDesktop(), 'banner-desktop-3216x384.png', 3216, 384)
+  await shoot(bannerMobile(), 'banner-mobile-3240x384.png', 3240, 384)
+}
 if (!only || only === 'icon') {
   await shoot(icon(), 'icon-256.png', 256, 256)
   await shoot(icon(), 'icon-512.png', 256, 256, 2)

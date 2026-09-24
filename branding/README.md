@@ -7,15 +7,21 @@ bundled into the app.
 | --- | --- |
 | `icon-256.png` | Community icon. Reddit crops it to a circle, so the orange ring is inset. |
 | `icon-512.png` | Same artwork at 2x, for anywhere that wants a larger source. |
-| `banner-3216x384.png` | Desktop community banner. |
+| `banner-desktop-3216x384.png` | Desktop community banner. |
+| `banner-mobile-3240x384.png` | Mobile community banner. |
 
-Reddit asks for desktop banners of at least 1072x128, and displays them at that
-8.375:1 aspect, so the banner is rendered at three times those dimensions. The
-shape drives the composition: the heap runs long and low across the strip
-rather than stacking tall, because height at that aspect just gets cropped
-away. Everything stays legible scaled down to 1072x128.
+Reddit's floors are 1072x128 for desktop banners and 1080x128 for mobile, and it
+displays them at those aspects. Both are rendered at three times those
+dimensions. The shape drives the composition: the heap runs long and low across
+the strip rather than stacking tall, because height at 8.4:1 just gets cropped
+away.
 
-Mobile banners are a separate, squarer asset that this does not cover.
+The two banners differ by weight rather than proportion, since the shapes are
+all but identical. The mobile cut lands roughly 1080px wide on a phone, against
+a desktop banner's full monitor width, so it drops the tagline and carries five
+big animals where desktop carries eight — at phone size the tagline falls below
+reading and a denser heap turns to mush. Both were checked scaled down to their
+stated floors.
 
 Regenerate after a palette or sprite change:
 
