@@ -1,12 +1,56 @@
 # Pile Kingdom
 
-Have a whale of a pile. A Suika-style drop-and-merge game for Reddit, built on Devvit. Drop animals into
-the pen; two of the same kind merge into the next bigger animal. Each game post
-keeps its own top-10 leaderboard.
+Have a whale of a pile. A Suika-style drop-and-merge game for Reddit, built on
+Devvit. Drop animals into the pen; two of the same kind merge into the next
+bigger animal. Each game post keeps its own top-10 leaderboard.
+
+It is a game for Reddit, for anyone who wants a minute of drop-and-merge in the
+feed. Play it at [r/PileKingdom](https://reddit.com/r/PileKingdom). Playing
+takes no setup and no account. Saving a score or posting a challenge needs a
+Reddit login.
 
 Tiers: chick, frog, duck, rabbit, penguin, dog, pig, cow, hippo, elephant, whale.
 
-## Play locally (no Reddit account needed)
+## How to play
+
+- Move the pointer or your finger to aim, let go to drop the animal.
+- Two of the same animal that touch merge into the next one up. Bigger animals
+  are worth more: a merge scores 1, 3, 6, 10, 15, 21, and so on up the row.
+- The row under the bucket runs chick to whale and lights up the animals you
+  have made. Making a whale is the goal.
+- If the pile sits above the dashed line for a second, the round ends.
+- The end-of-round panel shows the post's top 10 and where you placed. "Play
+  again" starts a fresh round on the same post.
+- "Challenge the subreddit" turns your score into a new game post.
+- The "?" button reopens the rules and the credits. The music note button
+  silences music and effects together and remembers the setting.
+
+## Operational notes
+
+Game posts are created by hand. Open the subreddit mod menu and pick
+"[Pile Kingdom] New game post". Installing the app does not post anything by
+itself.
+
+There is nothing to configure. The app has no settings screen, and nothing to
+set up beyond installing it.
+
+Two things it does on its own:
+
+- **Players can create posts.** The end-of-round panel offers "Challenge the
+  subreddit", which submits a new game post as that player, titled
+  `<name> piled up <score> in Pile Kingdom — can you beat it?`. The new post
+  opens with their score already on its leaderboard. Each player gets one
+  challenge per post, so a single game post cannot be used to flood the feed.
+- **Scores are stored per post.** For every player who finishes a round, the app
+  keeps a Reddit username and a best score, separately for each game post.
+  Nothing else is collected and nothing is sent outside Reddit.
+
+Bugs, or anything the app does that it should not? File an issue at
+https://github.com/victorlap/reddit-suika/issues and I will pick it up there.
+
+## For developers
+
+### Play locally (no Reddit account needed)
 
 ```sh
 npm install
@@ -16,7 +60,7 @@ npm run dev:local
 Open http://localhost:8787. The leaderboard is faked in memory under the name
 `local-player`.
 
-## Run on Reddit
+### Run on Reddit
 
 1. Create a Reddit account and visit https://developers.reddit.com to accept the
    developer terms.
@@ -26,7 +70,7 @@ Open http://localhost:8787. The leaderboard is faked in memory under the name
    then rebuilds on every change.
 5. In the subreddit, open the mod menu and pick "[Pile Kingdom] New game post".
 
-## Deploy a new version
+### Deploy a new version
 
 Version numbers live on Reddit's side, not in this repo. Uploading and
 publishing each bump the patch number from whatever the server already has, so
@@ -52,7 +96,7 @@ review, so both forms file a review request and wait on an approval email.
 Neither takes effect immediately, which is why publishing is not wired to a
 push. To cancel a pending request, run `npx devvit publish --withdraw`.
 
-### One-time CI setup
+#### One-time CI setup
 
 The upload job needs a Devvit token in a repository secret:
 
@@ -67,7 +111,7 @@ The token belongs to your Reddit account and carries your developer
 permissions, so treat it like a password. Rotate it by running `npx devvit
 logout && npx devvit login` and updating the secret.
 
-## Analytics (Devvit Journeys)
+### Analytics (Devvit Journeys)
 
 The game reports a Journey per round. Numbers land on the app's Analytics tab at
 https://developers.reddit.com.
@@ -98,7 +142,7 @@ The client logs the first receipt of each kind to the browser console, so open
 devtools to see which gate you are behind. Locally, `dev:local` stubs the routes
 and logs one line saying so.
 
-## Commands
+### Commands
 
 - `npm run dev:local`: local browser build with a fake API.
 - `npm run playtest [r/sub]`: live develop on Reddit.
@@ -106,7 +150,7 @@ and logs one line saying so.
 - `npm run format`: fix lints and formatting.
 - `npm run publish`: build, upload, and request app review.
 
-## Manual test checklist
+### Manual test checklist
 
 - Desktop and a phone-width viewport: playfield scales and stays centred.
 - Drop, cooldown, and the hover animal follows the pointer and finger.
@@ -118,7 +162,7 @@ and logs one line saying so.
 - The mute button next to "?" survives a reload, and silences music and effects
   together.
 
-## Layout
+### Layout
 
 - `src/shared/`: tier table, tuning constants, API types shared by client and server.
 - `src/client/game.ts`: pure rules (merging, scoring, cooldown, game over). Tested.

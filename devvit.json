@@ -28,9 +28,6 @@
       }
     ]
   },
-  "triggers": {
-    "onAppInstall": "/internal/on/app/install"
-  },
   "scripts": {
     "dev": "npm run watch",
     "build": "npm run build"

@@ -2,11 +2,7 @@ import type {IncomingMessage, ServerResponse} from 'node:http'
 import {telemetryRouter} from '@devvit/analytics/server/reddit'
 import {TELEMETRY_DEFAULT_CLIENT_BASE_PATH} from '@devvit/analytics/shared/reddit'
 import {context, reddit} from '@devvit/web/server'
-import type {
-  PartialJsonValue,
-  TriggerResponse,
-  UiResponse,
-} from '@devvit/web/shared'
+import type {PartialJsonValue, UiResponse} from '@devvit/web/shared'
 import express from 'express'
 import {
   type ChallengeRsp,
@@ -25,12 +21,7 @@ import {
   dbSubmitScore,
 } from './db.ts'
 
-type AnyRsp =
-  | LeaderboardRsp
-  | ChallengeRsp
-  | UiResponse
-  | TriggerResponse
-  | ErrorRsp
+type AnyRsp = LeaderboardRsp | ChallengeRsp | UiResponse | ErrorRsp
 
 /**
  * The SDK ships the five Journey routes as express middleware whose handlers
@@ -80,9 +71,6 @@ async function route(
         break
       case Endpoint.OnMenuNewPost:
         rsp = await routeMenuNewPost()
-        break
-      case Endpoint.OnAppInstall:
-        rsp = await routeAppInstall()
         break
       default:
         rsp = {error: 'not found', status: 404}
@@ -220,11 +208,6 @@ async function routeMenuNewPost(): Promise<UiResponse> {
     showToast: {text: `Post ${post.id} created.`, appearance: 'success'},
     navigateTo: post.url,
   }
-}
-
-async function routeAppInstall(): Promise<TriggerResponse> {
-  await reddit.submitCustomPost({title: 'Pile Kingdom'})
-  return {}
 }
 
 export function writeJson<T extends PartialJsonValue>(
