@@ -45,3 +45,14 @@ export const MUSIC_VOLUME = 0.35
 export const SFX_VOLUME = 0.7
 /** The whale is the point of the game, so its fanfare is the loudest thing. */
 export const FANFARE_VOLUME = 0.9
+/** How long the floating "+21" from a merge lasts. */
+export const POPUP_MS = 850
+/** How far that number drifts up over its life, in world units. */
+export const POPUP_RISE = 48
+export const POPUP_FONT_PX = 20
+/** The number springs to this multiple of its size, then settles back to 1. */
+export const POPUP_PEAK_SCALE = 1.5
+export const POPUP_SPRING_MS = 320
+/** A freshly merged animal bounces for this long, then sits at its true size. */
+export const MERGE_POP_MS = 280
+export const MERGE_POP_SCALE = 1.22

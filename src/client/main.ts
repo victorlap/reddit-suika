@@ -7,12 +7,13 @@ import {
   PHYSICS_STEP_MS,
   WORLD,
 } from '../shared/config.ts'
-import {MAX_TIER, tierRadius} from '../shared/tiers.ts'
+import {MAX_TIER, tierRadius, tierScore} from '../shared/tiers.ts'
 import {createChallenge, fetchLeaderboard, submitScore} from './api.ts'
 import {loadAudio, mergePlaybackRate} from './audio.ts'
 import {clampDropX, Game, physicsStepsFor} from './game.ts'
 import {attachInput} from './input.ts'
 import {Physics} from './physics.ts'
+import {Effects} from './popups.ts'
 import {loadSprites, Renderer} from './render.ts'
 import * as journey from './telemetry.ts'
 
@@ -46,6 +47,7 @@ async function init(): Promise<void> {
   const renderer = new Renderer(canvas, sprites)
   const physics = new Physics()
   const game = new Game()
+  const effects = new Effects()
   let hoverX = WORLD.width / 2
   let last = performance.now()
   let accumulator = 0
@@ -81,6 +83,7 @@ async function init(): Promise<void> {
 
   againBtn.addEventListener('click', () => {
     physics.clear()
+    effects.clear()
     game.reset()
     submitted = false
     overlay.classList.remove('show')
@@ -155,10 +158,14 @@ async function init(): Promise<void> {
       for (let i = 0; i < steps; i++) {
         const pairs = physics.step(PHYSICS_STEP_MS)
         const merges = game.applyMerges(pairs)
-        for (const id of merges.remove) physics.remove(id)
+        for (const id of merges.remove) {
+          physics.remove(id)
+          effects.remove(id)
+        }
         let biggest = 0
         for (const s of merges.spawn) {
-          physics.spawn(s.tier, s.x, s.y, MERGE_POP_VELOCITY)
+          const id = physics.spawn(s.tier, s.x, s.y, MERGE_POP_VELOCITY)
+          effects.add(id, tierScore(s.tier), s.x, s.y, now)
           journey.merged(s.tier)
           biggest = Math.max(biggest, s.tier)
         }
@@ -182,6 +189,8 @@ async function init(): Promise<void> {
       bestTier: game.bestTier,
       score: game.score,
       danger: bodies.some(b => b.y - tierRadius(b.tier) < DANGER_Y + 40),
+      popups: effects.popups(now),
+      pops: effects.bodyScales(now),
     })
     requestAnimationFrame(frame)
   }
