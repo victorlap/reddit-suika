@@ -13,6 +13,7 @@ import {clampDropX, Game, physicsStepsFor} from './game.ts'
 import {attachInput} from './input.ts'
 import {Physics} from './physics.ts'
 import {loadSprites, Renderer} from './render.ts'
+import * as journey from './telemetry.ts'
 
 const CHALLENGE_LABEL = 'Challenge the subreddit'
 
@@ -30,6 +31,7 @@ async function init(): Promise<void> {
   challengeBtn.disabled = true
 
   const sprites = await loadSprites()
+  journey.appReady()
   const renderer = new Renderer(canvas, sprites)
   const physics = new Physics()
   const game = new Game()
@@ -50,6 +52,7 @@ async function init(): Promise<void> {
       const x = clampDropX(renderer.toWorldX(clientX), game.current)
       const id = physics.spawn(game.current, x, DROP_Y)
       game.drop(performance.now(), id)
+      journey.dropped()
       hoverX = clampDropX(x, game.current)
     },
   })
@@ -59,6 +62,7 @@ async function init(): Promise<void> {
     game.reset()
     submitted = false
     overlay.classList.remove('show')
+    journey.playedAgain()
   })
 
   challengeBtn.addEventListener('click', () => void onChallengeClick())
@@ -75,8 +79,10 @@ async function init(): Promise<void> {
         const pairs = physics.step(PHYSICS_STEP_MS)
         const merges = game.applyMerges(pairs)
         for (const id of merges.remove) physics.remove(id)
-        for (const s of merges.spawn)
+        for (const s of merges.spawn) {
           physics.spawn(s.tier, s.x, s.y, MERGE_POP_VELOCITY)
+          journey.merged(s.tier)
+        }
       }
       game.tick(now)
       if (game.checkGameOver(physics.bodies(), now)) void onGameOver()
@@ -98,6 +104,7 @@ async function init(): Promise<void> {
     challengeBtn.disabled = true
     if (submitted) return
     submitted = true
+    journey.gameOver(game.score)
     finalEl.textContent = `${game.score}`
     boardEl.replaceChildren()
     meEl.textContent = 'Saving score…'
