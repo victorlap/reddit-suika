@@ -4,7 +4,8 @@
   "permissions": {
     "journeys": true,
     "reddit": {
-      "scope": "user"
+      "scope": "user",
+      "asUser": ["SUBMIT_POST"]
     }
   },
   "post": {
