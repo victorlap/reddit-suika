@@ -58,30 +58,45 @@ function page(
   </style></head><body>${body}</body></html>`
 }
 
-// The pile is a pyramid: a short tower either side of the crowned whale, so the
-// silhouette rises to the mascot and the animals read as heaped, not lined up.
+// Reddit shows desktop banners at 8.375:1 (its stated floor is 1072x128), so
+// this renders three times that. The heap runs long and low rather than tall:
+// a taller cluster would just get cropped away at that aspect.
 function banner(): string {
   const css = `
-    .mound {position: absolute; left: -400px; bottom: -252px; width: 2720px; height: 320px; border-radius: 50%; background: ${MOUND};}
-    .word {position: absolute; left: 368px; top: 50%; transform: translateY(-50%);}
-    h1 {margin: 0; font-size: 84px; line-height: 1; letter-spacing: 1px; color: ${BROWN};}
-    .bar {width: 116px; height: 11px; border-radius: 6px; background: ${ORANGE}; margin: 24px 0 18px;}
-    p {margin: 0; font-size: 27px; color: ${BROWN}; opacity: 0.72;}
-    .rabbit {left: 1085px; bottom: 28px; height: 142px; transform: rotate(-5deg);}
-    .frog {left: 1097px; bottom: 148px; height: 92px; transform: rotate(-8deg);}
-    .whale {left: 1215px; bottom: 24px; height: 268px;}
-    .crown {left: 1247px; bottom: 202px; transform: rotate(-16deg);}
-    .duck {left: 1445px; bottom: 26px; height: 118px; transform: rotate(6deg);}
-    .chick {left: 1465px; bottom: 134px; height: 88px; transform: rotate(-6deg);}`
+    .mound {position: absolute; left: -500px; bottom: -300px; width: 4400px; height: 380px; border-radius: 50%; background: ${MOUND};}
+    .word {position: absolute; left: 500px; top: 50%; transform: translateY(-50%);}
+    h1 {margin: 0; font-size: 110px; line-height: 1; letter-spacing: 1px; color: ${BROWN};}
+    .bar {width: 150px; height: 14px; border-radius: 7px; background: ${ORANGE}; margin: 26px 0 18px;}
+    p {margin: 0; font-size: 38px; color: ${BROWN}; opacity: 0.72;}
+    .cow {left: 1660px; bottom: 30px; height: 145px; transform: rotate(-3deg);}
+    .dog {left: 1790px; bottom: 28px; height: 165px; transform: rotate(2deg);}
+    .rabbit {left: 1900px; bottom: 30px; height: 160px; transform: rotate(-5deg);}
+    .frog {left: 1911px; bottom: 168px; height: 104px; transform: rotate(-8deg);}
+    .penguin {left: 2230px; bottom: 28px; height: 180px; transform: rotate(3deg);}
+    .chick {left: 2278px; bottom: 186px; height: 98px; transform: rotate(-6deg);}
+    .pig {left: 2400px; bottom: 30px; height: 170px; transform: rotate(-2deg);}
+    .hippo {left: 2550px; bottom: 28px; height: 145px; transform: rotate(4deg);}
+    .whale {left: 1995px; bottom: 26px; height: 300px;}
+    .crown {left: 2031px; top: 80px; transform: rotate(-16deg);}`
+  // Paint order is the heap's depth: the crowned whale lands last so it stays
+  // the summit no matter how much the neighbours overlap it.
+  const heap = [
+    'cow',
+    'dog',
+    'rabbit',
+    'frog',
+    'penguin',
+    'chick',
+    'pig',
+    'hippo',
+    'whale',
+  ]
+    .map(name => `<img class='${name}' src='${sprite(name)}' alt=''>`)
+    .join('')
   const body = `<div class='mound'></div>
     <div class='word'><h1>PILE KINGDOM</h1><div class='bar'></div><p>Have a whale of a pile.</p></div>
-    <img class='rabbit' src='${sprite('rabbit')}' alt=''>
-    <img class='frog' src='${sprite('frog')}' alt=''>
-    <img class='duck' src='${sprite('duck')}' alt=''>
-    <img class='chick' src='${sprite('chick')}' alt=''>
-    <img class='whale' src='${sprite('whale')}' alt=''>
-    ${crown(98)}`
-  return page(1920, 384, css, body)
+    ${heap}${crown(110)}`
+  return page(3216, 384, css, body)
 }
 
 function icon(): string {
@@ -146,7 +161,7 @@ async function shoot(
 const only = process.argv[2]
 mkdirSync(OUT, {recursive: true})
 if (!only || only === 'banner')
-  await shoot(banner(), 'banner-1920x384.png', 1920, 384)
+  await shoot(banner(), 'banner-3216x384.png', 3216, 384)
 if (!only || only === 'icon') {
   await shoot(icon(), 'icon-256.png', 256, 256)
   await shoot(icon(), 'icon-512.png', 256, 256, 2)

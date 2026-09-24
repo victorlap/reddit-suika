@@ -7,10 +7,15 @@ bundled into the app.
 | --- | --- |
 | `icon-256.png` | Community icon. Reddit crops it to a circle, so the orange ring is inset. |
 | `icon-512.png` | Same artwork at 2x, for anywhere that wants a larger source. |
-| `banner-1920x384.png` | Community banner. |
+| `banner-3216x384.png` | Desktop community banner. |
 
-The banner keeps the wordmark and the pile inside the middle 1280px, so a
-centred crop on narrow screens still shows both.
+Reddit asks for desktop banners of at least 1072x128, and displays them at that
+8.375:1 aspect, so the banner is rendered at three times those dimensions. The
+shape drives the composition: the heap runs long and low across the strip
+rather than stacking tall, because height at that aspect just gets cropped
+away. Everything stays legible scaled down to 1072x128.
+
+Mobile banners are a separate, squarer asset that this does not cover.
 
 Regenerate after a palette or sprite change:
 
