@@ -57,6 +57,10 @@
       padding: 20px 24px;
       min-width: 260px;
       max-width: 90vw;
+      /* Short embeds must not push the dismiss button off screen, so a tall
+         panel scrolls inside itself instead of overflowing the viewport. */
+      max-height: 90dvh;
+      overflow-y: auto;
       text-align: center;
     }
     .panel h1 {
@@ -131,6 +135,25 @@
     #help-list li + li {
       margin-top: 6px;
     }
+    #credits-title {
+      margin: 0 0 6px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.65;
+    }
+    #credits {
+      margin: 0 0 16px;
+      padding: 0;
+      list-style: none;
+      text-align: left;
+      font-size: 12px;
+      line-height: 1.5;
+      opacity: 0.85;
+    }
+    #credits a {
+      color: #e07a3a;
+    }
     </style>
   </head>
   <body>
@@ -156,6 +179,18 @@
           </li>
           <li>Bigger animals score more, so plan where things land.</li>
           <li>If the pile sits above the dashed line, the round ends.</li>
+        </ul>
+        <h2 id="credits-title">Credits</h2>
+        <ul id="credits">
+          <li>
+            Animals and sounds by
+            <a href="https://kenney.nl">Kenney</a>, CC0.
+          </li>
+          <li>
+            Music:
+            <a href="https://opengameart.org/content/bossa-nova">Bossa Nova</a>
+            by Joth, CC0.
+          </li>
         </ul>
         <button id="help-close" type="button">Got it</button>
       </div>

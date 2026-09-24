@@ -35,6 +35,7 @@ async function init(): Promise<void> {
     'help-close',
   ) as HTMLButtonElement
   const muteBtn = document.getElementById('mute') as HTMLButtonElement
+  const creditsEl = document.getElementById('credits') as HTMLUListElement
   challengeBtn.disabled = true
 
   // Audio fills itself in the background: 500KB of samples must not hold up the
@@ -107,6 +108,15 @@ async function init(): Promise<void> {
   helpBtn.addEventListener('click', () => {
     if (pausedAt === undefined) pausedAt = performance.now()
     helpOverlay.classList.add('show')
+  })
+
+  // A plain href cannot leave the embedded webview, so credit links go through
+  // the host the same way the challenge link does.
+  creditsEl.addEventListener('click', ev => {
+    const link = (ev.target as HTMLElement).closest('a')
+    if (!link) return
+    ev.preventDefault()
+    navigateTo(link.href)
   })
 
   helpCloseBtn.addEventListener('click', () => {
