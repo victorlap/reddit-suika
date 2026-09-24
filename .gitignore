@@ -3,3 +3,4 @@ dist/
 public/*.js
 public/*.js.map
 .devvit/
+.env

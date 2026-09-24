@@ -1,7 +1,12 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "pile-kingdom",
-  "permissions": {"journeys": true, "reddit": {"scope": "user"}},
+  "permissions": {
+    "journeys": true,
+    "reddit": {
+      "scope": "user"
+    }
+  },
   "post": {
     "entrypoints": {
       "default": {
@@ -28,5 +33,8 @@
   },
   "scripts": {
     "dev": "npm run watch"
+  },
+  "dev": {
+    "subreddit": "pile_kingdom_dev"
   }
 }
