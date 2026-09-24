@@ -66,7 +66,13 @@ export class Renderer {
 
   /** CSS pixel x (clientX) to world x. */
   toWorldX(clientX: number): number {
-    return (clientX - this.#rect.left - this.#offsetX) / this.#scale
+    // Read the rect fresh rather than using the cache: left/top are
+    // viewport-relative and go stale on scroll, unlike the cached
+    // width/height/scale/offsets that draw() uses. This only runs on
+    // pointer moves, not every frame, so it doesn't reintroduce the
+    // per-frame getBoundingClientRect() cost that resize() caching fixed.
+    const rect = this.#canvas.getBoundingClientRect()
+    return (clientX - rect.left - this.#offsetX) / this.#scale
   }
 
   draw(scene: Scene): void {

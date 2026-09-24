@@ -144,19 +144,38 @@ const MAX_JSON_BODY_BYTES = 8 * 1024
 async function readJson<T>(reqMsg: IncomingMessage): Promise<T | undefined> {
   const chunks: Uint8Array[] = []
   let size = 0
+  let tooLarge = false
   try {
     await new Promise<void>((resolve, reject) => {
+      let done = false
       reqMsg.on('data', (chunk: Buffer) => {
         size += chunk.length
         if (size > MAX_JSON_BODY_BYTES) {
-          reject(Error('request body too large'))
+          // Stop buffering but keep draining: the stream must still reach
+          // 'end' so the remaining bytes are fully consumed off the socket,
+          // otherwise a pipelined keep-alive request could be desynced by
+          // data we never read. (Destroying the request here would also
+          // destroy the underlying socket, so it never sends the response.)
+          tooLarge = true
           return
         }
         chunks.push(chunk)
       })
-      reqMsg.on('end', resolve)
-      reqMsg.on('error', reject)
-      reqMsg.on('aborted', () => reject(Error('request aborted')))
+      reqMsg.on('end', () => {
+        done = true
+        if (tooLarge) reject(Error('request body too large'))
+        else resolve()
+      })
+      reqMsg.on('error', err => {
+        done = true
+        reject(err)
+      })
+      // 'aborted' is soft-deprecated; 'close' is the documented replacement.
+      // It also fires after a normal completed request, so only treat it as
+      // an abort if the promise has not already settled.
+      reqMsg.on('close', () => {
+        if (!done) reject(Error('request aborted'))
+      })
     })
   } catch {
     return
