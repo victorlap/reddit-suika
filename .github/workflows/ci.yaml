@@ -43,6 +43,15 @@ jobs:
       - name: Install Dependencies
         run: npm ci
       - name: Upload app version
+        timeout-minutes: 10
         env:
           DEVVIT_AUTH_TOKEN: ${{ secrets.DEVVIT_AUTH_TOKEN }}
-        run: npx devvit upload
+        run: |
+          # Without a token the CLI falls back to an interactive browser login,
+          # which cannot succeed on a runner. Skip instead of hanging on it.
+          if [ -z "$DEVVIT_AUTH_TOKEN" ]; then
+            echo "DEVVIT_AUTH_TOKEN is not set, so there is nothing to upload to."
+            echo "See 'One-time CI setup' in README.md."
+            exit 0
+          fi
+          npx devvit upload
