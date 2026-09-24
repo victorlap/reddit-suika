@@ -28,6 +28,11 @@ async function init(): Promise<void> {
   const challengeMsgEl = document.getElementById(
     'challenge-msg',
   ) as HTMLParagraphElement
+  const helpBtn = document.getElementById('help') as HTMLButtonElement
+  const helpOverlay = document.getElementById('help-overlay') as HTMLDivElement
+  const helpCloseBtn = document.getElementById(
+    'help-close',
+  ) as HTMLButtonElement
   challengeBtn.disabled = true
 
   const sprites = await loadSprites()
@@ -40,8 +45,13 @@ async function init(): Promise<void> {
   let accumulator = 0
   let submitted = false
   let challengePosted = false
+  let pausedAt: number | undefined
 
-  window.addEventListener('resize', () => renderer.resize())
+  window.addEventListener('resize', () => {
+    renderer.resize()
+    placeHelpBtn()
+  })
+  placeHelpBtn()
 
   attachInput(canvas, {
     move: clientX => {
@@ -67,14 +77,40 @@ async function init(): Promise<void> {
 
   challengeBtn.addEventListener('click', () => void onChallengeClick())
 
+  helpBtn.addEventListener('click', () => {
+    if (pausedAt === undefined) pausedAt = performance.now()
+    helpOverlay.classList.add('show')
+  })
+
+  helpCloseBtn.addEventListener('click', () => {
+    helpOverlay.classList.remove('show')
+    if (pausedAt !== undefined) game.resumeAfter(performance.now() - pausedAt)
+    pausedAt = undefined
+  })
+
+  /** Keep the help button on its slot in the chain strip. */
+  function placeHelpBtn(): void {
+    const {left, top, size} = renderer.helpRect()
+    helpBtn.style.left = `${left}px`
+    helpBtn.style.top = `${top}px`
+    helpBtn.style.width = `${size}px`
+    helpBtn.style.height = `${size}px`
+    helpBtn.style.fontSize = `${Math.round(size * 0.6)}px`
+  }
+
   function frame(now: number): void {
     const elapsed = now - last
     last = now
-    accumulator = Math.min(accumulator + elapsed, PHYSICS_STEP_MS * 10)
+    // Reading the help must not cost the player their pile, so a paused frame
+    // banks no time at all.
+    const paused = pausedAt !== undefined
+    accumulator = paused
+      ? 0
+      : Math.min(accumulator + elapsed, PHYSICS_STEP_MS * 10)
     const steps = physicsStepsFor(accumulator)
     accumulator -= steps * PHYSICS_STEP_MS
 
-    if (game.phase !== 'over') {
+    if (game.phase !== 'over' && !paused) {
       for (let i = 0; i < steps; i++) {
         const pairs = physics.step(PHYSICS_STEP_MS)
         const merges = game.applyMerges(pairs)
@@ -94,6 +130,7 @@ async function init(): Promise<void> {
       hover:
         game.phase === 'ready' ? {tier: game.current, x: hoverX} : undefined,
       nextTier: game.next,
+      bestTier: game.bestTier,
       score: game.score,
       danger: bodies.some(b => b.y - tierRadius(b.tier) < DANGER_Y + 40),
     })

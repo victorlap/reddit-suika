@@ -56,6 +56,8 @@ export function physicsStepsFor(elapsedMs: number): number {
 export class Game {
   phase: Phase = 'ready'
   score = 0
+  /** Highest tier dropped or merged this round. */
+  bestTier = 1
   current: number
   next: number
   #rng: () => number
@@ -75,6 +77,7 @@ export class Game {
     this.phase = 'cooldown'
     this.#cooldownUntil = nowMs + DROP_COOLDOWN_MS
     this.#lastDrop = {id: bodyId, atMs: nowMs}
+    this.bestTier = Math.max(this.bestTier, this.current)
     this.current = this.next
     this.next = this.#rollTier()
   }
@@ -87,6 +90,8 @@ export class Game {
   applyMerges(pairs: readonly CollisionPair[]): MergeResult {
     const result = resolveMerges(pairs)
     this.score += result.scoreDelta
+    for (const s of result.spawn)
+      this.bestTier = Math.max(this.bestTier, s.tier)
     return result
   }
 
@@ -116,9 +121,19 @@ export class Game {
     return false
   }
 
+  /**
+   * Give back time the player spent with the game paused. Without this, a body
+   * that was already above the line ends the round the moment play resumes.
+   */
+  resumeAfter(pausedMs: number): void {
+    for (const [id, since] of this.#aboveSince)
+      this.#aboveSince.set(id, since + pausedMs)
+  }
+
   reset(): void {
     this.phase = 'ready'
     this.score = 0
+    this.bestTier = 1
     this.#cooldownUntil = 0
     this.#lastDrop = undefined
     this.#aboveSince.clear()

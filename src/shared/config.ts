@@ -1,5 +1,14 @@
 /** Logical playfield size. The canvas scales this to fit the viewport. */
 export const WORLD = {width: 400, height: 600} as const
+/** Strip under the bucket showing the chain from chick to whale. */
+export const CHAIN_HEIGHT = 60
+/** Everything the canvas draws: the bucket plus the chain strip. */
+export const STAGE = {
+  width: WORLD.width,
+  height: WORLD.height + CHAIN_HEIGHT,
+} as const
+/** Help button box at the left end of the chain strip, in world units. */
+export const HELP_BUTTON = {x: 6, y: WORLD.height + 13, size: 34} as const
 /** Bodies whose centre is above this y for GAME_OVER_GRACE_MS end the game. */
 export const DANGER_Y = 100
 /** y where the next animal hovers before dropping. */
