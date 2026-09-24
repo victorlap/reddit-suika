@@ -6,6 +6,7 @@ import type {
   UiResponse,
 } from '@devvit/web/shared'
 import {
+  type ChallengeRsp,
   Endpoint,
   EndpointMethod,
   type ErrorRsp,
@@ -13,9 +14,19 @@ import {
   type SubmitScoreReq,
 } from '../shared/api.ts'
 import {MAX_SCORE} from '../shared/config.ts'
-import {dbGetLeaderboard, dbSubmitScore} from './db.ts'
+import {
+  dbClaimChallenge,
+  dbGetLeaderboard,
+  dbReleaseChallenge,
+  dbSubmitScore,
+} from './db.ts'
 
-type AnyRsp = LeaderboardRsp | UiResponse | TriggerResponse | ErrorRsp
+type AnyRsp =
+  | LeaderboardRsp
+  | ChallengeRsp
+  | UiResponse
+  | TriggerResponse
+  | ErrorRsp
 
 export async function onReq(
   reqMsg: IncomingMessage,
@@ -47,6 +58,9 @@ async function route(
         break
       case Endpoint.SubmitScore:
         rsp = await routeSubmitScore(reqMsg)
+        break
+      case Endpoint.CreateChallenge:
+        rsp = await routeCreateChallenge()
         break
       case Endpoint.OnMenuNewPost:
         rsp = await routeMenuNewPost()
@@ -87,6 +101,42 @@ async function routeSubmitScore(
     return {error: 'invalid score', status: 400}
   await dbSubmitScore(t3, username, score)
   return dbGetLeaderboard(t3, username)
+}
+
+async function routeCreateChallenge(): Promise<ChallengeRsp | ErrorRsp> {
+  const t3 = context.postId
+  if (!t3) throw Error('no t3')
+  const username = context.username
+  if (!username) return {error: 'sign in to post a challenge', status: 401}
+  const board = await dbGetLeaderboard(t3, username)
+  const score = board.me?.score
+  if (score === undefined) return {error: 'no score to share yet', status: 400}
+  const claimed = await dbClaimChallenge(t3, username)
+  if (!claimed)
+    return {
+      error: 'you already made a challenge from this post',
+      status: 409,
+    }
+  let post: Awaited<ReturnType<typeof reddit.submitCustomPost>>
+  try {
+    post = await reddit.submitCustomPost({
+      subredditName: context.subredditName,
+      title: `${username} piled up ${score} in Pile Kingdom — can you beat it?`,
+      runAs: 'USER',
+      userGeneratedContent: {
+        text: `I scored ${score} in Pile Kingdom. Beat it.`,
+      },
+      postData: {challenger: username, target: score},
+      textFallback: {
+        text: `${username} scored ${score} in Pile Kingdom. Open this post on a supported client to play.`,
+      },
+    })
+  } catch (err) {
+    await dbReleaseChallenge(t3, username)
+    throw err
+  }
+  await dbSubmitScore(post.id, username, score)
+  return {ok: true, score, postUrl: post.url}
 }
 
 const MAX_JSON_BODY_BYTES = 8 * 1024

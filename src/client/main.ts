@@ -1,3 +1,4 @@
+import {navigateTo} from '@devvit/web/client'
 import type {LeaderboardRsp} from '../shared/api.ts'
 import {
   DANGER_Y,
@@ -7,11 +8,13 @@ import {
   WORLD,
 } from '../shared/config.ts'
 import {tierRadius} from '../shared/tiers.ts'
-import {fetchLeaderboard, submitScore} from './api.ts'
+import {createChallenge, fetchLeaderboard, submitScore} from './api.ts'
 import {clampDropX, Game, physicsStepsFor} from './game.ts'
 import {attachInput} from './input.ts'
 import {Physics} from './physics.ts'
 import {loadSprites, Renderer} from './render.ts'
+
+const CHALLENGE_LABEL = 'Challenge the subreddit'
 
 async function init(): Promise<void> {
   const canvas = document.getElementById('game') as HTMLCanvasElement
@@ -20,6 +23,11 @@ async function init(): Promise<void> {
   const boardEl = document.getElementById('board') as HTMLOListElement
   const meEl = document.getElementById('me') as HTMLParagraphElement
   const againBtn = document.getElementById('again') as HTMLButtonElement
+  const challengeBtn = document.getElementById('challenge') as HTMLButtonElement
+  const challengeMsgEl = document.getElementById(
+    'challenge-msg',
+  ) as HTMLParagraphElement
+  challengeBtn.disabled = true
 
   const sprites = await loadSprites()
   const renderer = new Renderer(canvas, sprites)
@@ -50,7 +58,12 @@ async function init(): Promise<void> {
     game.reset()
     submitted = false
     overlay.classList.remove('show')
+    challengeBtn.disabled = false
+    challengeBtn.textContent = CHALLENGE_LABEL
+    challengeMsgEl.textContent = ''
   })
+
+  challengeBtn.addEventListener('click', () => void onChallengeClick())
 
   function frame(now: number): void {
     const elapsed = now - last
@@ -92,6 +105,7 @@ async function init(): Promise<void> {
     overlay.classList.add('show')
 
     let board = await submitScore(game.score)
+    challengeBtn.disabled = false
     if (board === 'signedOut') {
       meEl.textContent = 'Sign in to Reddit to post your score.'
       board = await fetchLeaderboard()
@@ -120,6 +134,39 @@ async function init(): Promise<void> {
     if (board.me)
       meEl.textContent = `You: #${board.me.rank} with ${board.me.score}`
     else if (!meEl.textContent?.startsWith('Sign in')) meEl.textContent = ''
+  }
+
+  async function onChallengeClick(): Promise<void> {
+    challengeBtn.disabled = true
+    challengeBtn.textContent = 'Posting…'
+    const rsp = await createChallenge()
+    if (rsp === 'signedOut') {
+      challengeBtn.disabled = false
+      challengeBtn.textContent = CHALLENGE_LABEL
+      challengeMsgEl.textContent = 'Sign in to Reddit to post a challenge.'
+      return
+    }
+    if (rsp === 'alreadyChallenged') {
+      challengeBtn.textContent = 'Already challenged'
+      challengeMsgEl.textContent =
+        'You already made a challenge from this post.'
+      return
+    }
+    if (rsp === 'noScore' || rsp === undefined) {
+      challengeBtn.disabled = false
+      challengeBtn.textContent = CHALLENGE_LABEL
+      challengeMsgEl.textContent = 'Could not post your challenge.'
+      return
+    }
+    challengeBtn.textContent = 'Challenge posted'
+    const link = document.createElement('a')
+    link.textContent = 'View your challenge'
+    link.href = rsp.postUrl
+    link.addEventListener('click', ev => {
+      ev.preventDefault()
+      navigateTo(rsp.postUrl)
+    })
+    challengeMsgEl.replaceChildren(link)
   }
 
   requestAnimationFrame(frame)

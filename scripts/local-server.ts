@@ -7,7 +7,11 @@ import {
   type ServerResponse,
 } from 'node:http'
 import {extname, join, normalize} from 'node:path'
-import {Endpoint, type LeaderboardRsp} from '../src/shared/api.ts'
+import {
+  type ChallengeRsp,
+  Endpoint,
+  type LeaderboardRsp,
+} from '../src/shared/api.ts'
 import {LEADERBOARD_SIZE, MAX_SCORE} from '../src/shared/config.ts'
 
 const PORT = Number(process.env.PORT ?? 8787)
@@ -17,6 +21,7 @@ const scores = new Map<string, number>([
   ['snoo', 420],
   ['wombat_fan', 260],
 ])
+const challenged = new Set<string>()
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -69,6 +74,27 @@ async function handle(
       return json(rsp, 400, {error: 'invalid score', status: 400})
     scores.set(USERNAME, Math.max(scores.get(USERNAME) ?? 0, score))
     return json(rsp, 200, leaderboard())
+  }
+
+  if (path === Endpoint.CreateChallenge && req.method === 'POST') {
+    const score = scores.get(USERNAME)
+    if (score === undefined)
+      return json(rsp, 400, {error: 'no score to share yet', status: 400})
+    if (challenged.has(USERNAME))
+      return json(rsp, 409, {
+        error: 'you already made a challenge from this post',
+        status: 409,
+      })
+    challenged.add(USERNAME)
+    const title = `${USERNAME} piled up ${score} in Pile Kingdom — can you beat it?`
+    const postData = {challenger: USERNAME, target: score}
+    console.log(`would submit challenge post: ${title}`, postData)
+    const body: ChallengeRsp = {
+      ok: true,
+      score,
+      postUrl: 'http://localhost:8787/',
+    }
+    return json(rsp, 200, body)
   }
 
   const rel = path === '' ? 'game.html' : normalize(path)
