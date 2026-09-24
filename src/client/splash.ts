@@ -1,8 +1,10 @@
 import {context, requestExpandedMode} from '@devvit/web/client'
 import {DROP_Y, MERGE_POP_VELOCITY, PHYSICS_STEP_MS} from '../shared/config.ts'
+import {tierScore} from '../shared/tiers.ts'
 import {fetchLeaderboard} from './api.ts'
 import {physicsStepsFor, resolveMerges} from './game.ts'
 import {Physics} from './physics.ts'
+import {Effects} from './popups.ts'
 import {loadSprites, Renderer} from './render.ts'
 
 type Drop = {tier: number; x: number}
@@ -73,6 +75,7 @@ async function runDemo(): Promise<void> {
   // No chain strip here: the card has room for the bucket, not the whole HUD.
   const renderer = new Renderer(canvas, sprites, {chain: false})
   const physics = new Physics()
+  const effects = new Effects()
   let accumulator = 0
   let dropped = 0
   let score = 0
@@ -80,12 +83,16 @@ async function runDemo(): Promise<void> {
   let running = true
 
   /** Advance the world one fixed step, settling whatever merges it caused. */
-  function step(): void {
+  function step(nowMs: number): void {
     const merges = resolveMerges(physics.step(PHYSICS_STEP_MS))
     score += merges.scoreDelta
-    for (const id of merges.remove) physics.remove(id)
+    for (const id of merges.remove) {
+      physics.remove(id)
+      effects.remove(id)
+    }
     for (const s of merges.spawn) {
-      physics.spawn(s.tier, s.x, s.y, MERGE_POP_VELOCITY)
+      const id = physics.spawn(s.tier, s.x, s.y, MERGE_POP_VELOCITY)
+      effects.add(id, tierScore(s.tier), s.x, s.y, nowMs)
       bestTier = Math.max(bestTier, s.tier)
     }
   }
@@ -109,24 +116,26 @@ async function runDemo(): Promise<void> {
   // Open on a board someone has already been playing: the seeded drops run
   // through the same simulation here, off-screen, so the first frame paints a
   // settled pile instead of an empty bucket.
+  // Their clock ends now, so the score popups and merge bounces they set off
+  // have expired by the first paint rather than firing all at once on it.
   const seedMs = DEMO_SEEDED * DEMO_INTERVAL_MS + DEMO_SETTLE_MS
+  const start = performance.now()
   for (let t = PHYSICS_STEP_MS; t <= seedMs; t += PHYSICS_STEP_MS) {
     dropsDue(t, DEMO_SEEDED, 0)
-    step()
+    step(start - seedMs + t)
   }
 
   const runMs =
     (DEMO_DROPS.length - DEMO_SEEDED) * DEMO_INTERVAL_MS + DEMO_SETTLE_MS
-  const start = performance.now()
   let last = start
 
   window.addEventListener('resize', () => {
     renderer.resize()
     // The loop stops once the pile settles, so a late resize has to repaint.
-    if (!running) draw()
+    if (!running) draw(performance.now())
   })
 
-  function draw(): void {
+  function draw(nowMs: number): void {
     renderer.draw({
       bodies: physics.bodies(),
       hover: DEMO_DROPS[dropped] ?? DEMO_HOVER,
@@ -135,6 +144,8 @@ async function runDemo(): Promise<void> {
       score,
       // Nothing is at stake on the card, so the line never flashes red.
       danger: false,
+      popups: effects.popups(nowMs),
+      pops: effects.bodyScales(nowMs),
     })
   }
 
@@ -147,9 +158,9 @@ async function runDemo(): Promise<void> {
 
     const steps = physicsStepsFor(accumulator)
     accumulator -= steps * PHYSICS_STEP_MS
-    for (let i = 0; i < steps; i++) step()
+    for (let i = 0; i < steps; i++) step(now)
 
-    draw()
+    draw(now)
     running = elapsed < runMs
     if (running) requestAnimationFrame(frame)
   }
