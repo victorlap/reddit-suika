@@ -26,6 +26,47 @@ Open http://localhost:8787. The leaderboard is faked in memory under the name
    then rebuilds on every change.
 5. In the subreddit, open the mod menu and pick "[Pile Kingdom] New game post".
 
+## Deploy a new version
+
+Version numbers live on Reddit's side, not in this repo. Uploading and
+publishing each bump the patch number from whatever the server already has, so
+there is nothing to edit before deploying. `devvit.json` points `scripts.build`
+at `npm run build`, so both build the bundles themselves.
+
+**Every push to `main` uploads automatically.** The `upload` job in
+`.github/workflows/ci.yaml` runs after the tests pass and creates a new version.
+Uploaded versions are visible only to you and installable on a test subreddit
+under 200 subscribers, so this is a deploy for your own testing, not a release.
+Pick up the new version with `npx devvit install r/<your-test-sub>`, which
+installs `@latest` by default.
+
+**Releasing is manual, on purpose.**
+
+```sh
+npm run publish               # once approved, installable anywhere you moderate
+npm run publish -- --public   # once approved, listed in the public directory
+```
+
+Pile Kingdom uses custom posts, and Devvit sends every custom-post app through
+review, so both forms file a review request and wait on an approval email.
+Neither takes effect immediately, which is why publishing is not wired to a
+push. To cancel a pending request, run `npx devvit publish --withdraw`.
+
+### One-time CI setup
+
+The upload job needs a Devvit token in a repository secret:
+
+1. `npx devvit login` locally, if you have not already.
+2. Copy the contents of `~/.devvit/token`. It is a single line of JSON like
+   `{"token":"<base64>","copyPaste":false}`. Copy all of it, not just the
+   base64 part.
+3. In the repo, go to Settings, then Secrets and variables, then Actions, and
+   add a secret named `DEVVIT_AUTH_TOKEN` with that value.
+
+The token belongs to your Reddit account and carries your developer
+permissions, so treat it like a password. Rotate it by running `npx devvit
+logout && npx devvit login` and updating the secret.
+
 ## Analytics (Devvit Journeys)
 
 The game reports a Journey per round. Numbers land on the app's Analytics tab at
