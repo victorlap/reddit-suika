@@ -37,6 +37,7 @@ async function init(): Promise<void> {
   let last = performance.now()
   let accumulator = 0
   let submitted = false
+  let challengeSeq = 0
 
   window.addEventListener('resize', () => renderer.resize())
 
@@ -57,6 +58,7 @@ async function init(): Promise<void> {
     physics.clear()
     game.reset()
     submitted = false
+    challengeSeq++
     overlay.classList.remove('show')
     challengeBtn.disabled = false
     challengeBtn.textContent = CHALLENGE_LABEL
@@ -97,6 +99,7 @@ async function init(): Promise<void> {
   }
 
   async function onGameOver(): Promise<void> {
+    challengeBtn.disabled = true
     if (submitted) return
     submitted = true
     finalEl.textContent = `${game.score}`
@@ -137,9 +140,11 @@ async function init(): Promise<void> {
   }
 
   async function onChallengeClick(): Promise<void> {
+    const seq = challengeSeq
     challengeBtn.disabled = true
     challengeBtn.textContent = 'Posting…'
     const rsp = await createChallenge()
+    if (seq !== challengeSeq) return
     if (rsp === 'signedOut') {
       challengeBtn.disabled = false
       challengeBtn.textContent = CHALLENGE_LABEL

@@ -132,10 +132,22 @@ async function routeCreateChallenge(): Promise<ChallengeRsp | ErrorRsp> {
       },
     })
   } catch (err) {
-    await dbReleaseChallenge(t3, username)
+    try {
+      await dbReleaseChallenge(t3, username)
+    } catch (releaseErr) {
+      console.error(
+        `failed to release challenge slot; ${releaseErr instanceof Error ? releaseErr.stack : releaseErr}`,
+      )
+    }
     throw err
   }
-  await dbSubmitScore(post.id, username, score)
+  try {
+    await dbSubmitScore(post.id, username, score)
+  } catch (err) {
+    console.error(
+      `failed to seed challenge post leaderboard; ${err instanceof Error ? err.stack : err}`,
+    )
+  }
   return {ok: true, score, postUrl: post.url}
 }
 

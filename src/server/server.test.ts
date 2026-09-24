@@ -30,6 +30,7 @@ let username: string | undefined = 'alice'
 type SubmitCustomPostOpts = Parameters<typeof reddit.submitCustomPost>[0]
 let submitCustomPostCalls: SubmitCustomPostOpts[] = []
 let submitCustomPostShouldFail = false
+let zAddShouldFailFor: string | undefined
 
 function sorted(key: string): {member: string; score: number}[] {
   return [...(sets.get(key) ?? new Map()).entries()]
@@ -39,6 +40,7 @@ function sorted(key: string): {member: string; score: number}[] {
 
 before(async () => {
   redis.zAdd = async (key, ...members) => {
+    if (key === zAddShouldFailFor) throw Error('zAdd failed')
     const set = sets.get(key) ?? new Map<string, number>()
     for (const m of members) set.set(m.member, m.score)
     sets.set(key, set)
@@ -112,6 +114,7 @@ beforeEach(() => {
   hashes.clear()
   submitCustomPostCalls = []
   submitCustomPostShouldFail = false
+  zAddShouldFailFor = undefined
   username = 'alice'
 })
 
@@ -221,6 +224,8 @@ test("the challenger is seeded onto the new post's board so it is never empty", 
   assert.deepEqual(sorted('lb:t3_new'), [{member: 'alice', score: 120}])
 })
 
+// This calls sequentially, so it proves hSetNX's refusal, not its atomicity
+// under concurrent requests.
 test('a second challenge from the same post is refused so the subreddit is not flooded', async () => {
   await submit(120)
   const first = await challenge()
@@ -252,4 +257,15 @@ test('a failed post creation releases the slot so the player can retry', async (
   const retried = await challenge()
   assert.equal(retried.status, 200)
   assert.equal(submitCustomPostCalls.length, 2)
+})
+
+test('a failure seeding the new post still succeeds, since the post itself was already created', async () => {
+  await submit(120)
+  zAddShouldFailFor = 'lb:t3_new'
+  const rsp = await challenge()
+  assert.equal(rsp.status, 200)
+  const body = (await rsp.json()) as ChallengeRsp
+  assert.equal(body.ok, true)
+  assert.equal(body.postUrl, 'https://reddit.com/r/test/comments/new')
+  assert.deepEqual(sorted('lb:t3_new'), [])
 })
