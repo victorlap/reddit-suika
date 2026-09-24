@@ -32,7 +32,8 @@
     "onAppInstall": "/internal/on/app/install"
   },
   "scripts": {
-    "dev": "npm run watch"
+    "dev": "npm run watch",
+    "build": "npm run build"
   },
   "dev": {
     "subreddit": "pile_kingdom_dev"
