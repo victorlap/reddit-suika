@@ -14,7 +14,12 @@ async function renderBeat(): Promise<void> {
     beatEl.textContent = `u/${challenger} scored ${target}. Beat it.`
     return
   }
-  const top = (await fetchLeaderboard())?.entries[0]
+  const board = await fetchLeaderboard()
+  if (!board) {
+    beatEl.textContent = 'Could not load the scores.'
+    return
+  }
+  const top = board.entries[0]
   beatEl.textContent = top
     ? `Score to beat: ${top.score} by u/${top.username}`
     : 'No scores yet. Go first.'

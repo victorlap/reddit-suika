@@ -17,6 +17,7 @@ import {MAX_SCORE} from '../shared/config.ts'
 import {
   dbClaimChallenge,
   dbGetLeaderboard,
+  dbGetScore,
   dbReleaseChallenge,
   dbSubmitScore,
 } from './db.ts'
@@ -108,8 +109,7 @@ async function routeCreateChallenge(): Promise<ChallengeRsp | ErrorRsp> {
   if (!t3) throw Error('no t3')
   const username = context.username
   if (!username) return {error: 'sign in to post a challenge', status: 401}
-  const board = await dbGetLeaderboard(t3, username)
-  const score = board.me?.score
+  const score = await dbGetScore(t3, username)
   if (score === undefined) return {error: 'no score to share yet', status: 400}
   const claimed = await dbClaimChallenge(t3, username)
   if (!claimed)

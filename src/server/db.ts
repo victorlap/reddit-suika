@@ -24,6 +24,14 @@ export async function dbSubmitScore(
   await redis.zAdd(key(t3), {member: username, score})
 }
 
+/** The player's stored best for a post, or `undefined` when they have none. */
+export async function dbGetScore(
+  t3: T3,
+  username: string,
+): Promise<number | undefined> {
+  return redis.zScore(key(t3), username)
+}
+
 export async function dbGetLeaderboard(
   t3: T3,
   username: string | undefined,
