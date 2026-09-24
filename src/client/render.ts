@@ -33,6 +33,11 @@ export type Scene = {
   pops: ReadonlyMap<number, number>
 }
 
+export type RendererOpts = {
+  /** Draw the chick-to-whale chain strip under the bucket. */
+  chain: boolean
+}
+
 export async function loadSprites(): Promise<Map<number, HTMLImageElement>> {
   const entries = await Promise.all(
     TIERS.map(async t => {
@@ -54,6 +59,7 @@ export class Renderer {
   #canvas: HTMLCanvasElement
   #ctx: CanvasRenderingContext2D
   #sprites: Map<number, HTMLImageElement>
+  #chain: boolean
   #scale = 1
   #offsetX = 0
   #offsetY = 0
@@ -62,26 +68,29 @@ export class Renderer {
   constructor(
     canvas: HTMLCanvasElement,
     sprites: Map<number, HTMLImageElement>,
+    opts: RendererOpts = {chain: true},
   ) {
     this.#canvas = canvas
     const ctx = canvas.getContext('2d')
     if (!ctx) throw Error('no 2d context')
     this.#ctx = ctx
     this.#sprites = sprites
+    this.#chain = opts.chain
     this.#rect = canvas.getBoundingClientRect()
     this.resize()
   }
 
-  /** Fit the bucket and the chain strip into the canvas's CSS box, centred. */
+  /** Fit the stage into the canvas's CSS box, centred. */
   resize(): void {
     this.#rect = this.#canvas.getBoundingClientRect()
     const rect = this.#rect
     const dpr = window.devicePixelRatio || 1
     this.#canvas.width = Math.round(rect.width * dpr)
     this.#canvas.height = Math.round(rect.height * dpr)
-    this.#scale = Math.min(rect.width / STAGE.width, rect.height / STAGE.height)
+    const stageHeight = this.#chain ? STAGE.height : WORLD.height
+    this.#scale = Math.min(rect.width / STAGE.width, rect.height / stageHeight)
     this.#offsetX = (rect.width - STAGE.width * this.#scale) / 2
-    this.#offsetY = (rect.height - STAGE.height * this.#scale) / 2
+    this.#offsetY = (rect.height - stageHeight * this.#scale) / 2
     this.#ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   }
 
@@ -180,13 +189,15 @@ export class Renderer {
     this.#popups(scene.popups)
 
     // Evolution chain: what the player has made, and what is still ahead.
-    const chainY = WORLD.height + CHAIN_HEIGHT / 2
-    for (const t of TIERS) {
-      ctx.globalAlpha = t.tier <= scene.bestTier ? 1 : 0.25
-      const x = CHAIN_X + (t.tier - 0.5) * CHAIN_PITCH
-      this.#sprite(t.tier, x, chainY, 0, CHAIN_RADIUS)
+    if (this.#chain) {
+      const chainY = WORLD.height + CHAIN_HEIGHT / 2
+      for (const t of TIERS) {
+        ctx.globalAlpha = t.tier <= scene.bestTier ? 1 : 0.25
+        const x = CHAIN_X + (t.tier - 0.5) * CHAIN_PITCH
+        this.#sprite(t.tier, x, chainY, 0, CHAIN_RADIUS)
+      }
+      ctx.globalAlpha = 1
     }
-    ctx.globalAlpha = 1
 
     // HUD
     ctx.fillStyle = '#5b4636'
