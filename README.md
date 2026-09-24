@@ -26,6 +26,37 @@ Open http://localhost:8787. The leaderboard is faked in memory under the name
    then rebuilds on every change.
 5. In the subreddit, open the mod menu and pick "[Pile Kingdom] New game post".
 
+## Analytics (Devvit Journeys)
+
+The game reports a Journey per round. Numbers land on the app's Analytics tab at
+https://developers.reddit.com.
+
+| Event | Fires when |
+| --- | --- |
+| `App.Ready` | sprites finish loading |
+| `Journey.Start` | the first drop of a round |
+| `Journey.Progress` | a merge beats the round's best tier, `progress` 0.1 to 1 |
+| `Journey.Interaction` | "Play again" is clicked |
+| `Journey.End` | game over, `win` when the round made a whale |
+
+Every round ends by filling the pen, so counting all of them as complete would
+pin completion rate at 100%. Making a whale is the objective, so that is what
+`complete` and `win` mean here. Read completion rate as "share of rounds that
+reached the whale".
+
+Two gates stand between this code and real numbers:
+
+- Playtest builds never ingest. Every receipt comes back
+  `JOURNEY_RECEIPT_DENIED_PLAYTEST`.
+- Published apps ingest only after Reddit allowlists the app and approves the
+  journey map above. Until then receipts read
+  `JOURNEY_RECEIPT_DENIED_NOT_ALLOWLISTED`, which is the cue to ask the Devvit
+  team for access.
+
+The client logs the first receipt of each kind to the browser console, so open
+devtools to see which gate you are behind. Locally, `dev:local` stubs the routes
+and logs one line saying so.
+
 ## Commands
 
 - `npm run dev:local`: local browser build with a fake API.
@@ -47,7 +78,8 @@ Open http://localhost:8787. The leaderboard is faked in memory under the name
 - `src/shared/`: tier table, tuning constants, API types shared by client and server.
 - `src/client/game.ts`: pure rules (merging, scoring, cooldown, game over). Tested.
 - `src/client/physics.ts`: the only file that touches Matter.js. Tested headless.
-- `src/client/render.ts`, `input.ts`, `main.ts`, `api.ts`: browser wiring.
+- `src/client/journey.ts`: pure Journey rules (progress scale, report-once). Tested.
+- `src/client/render.ts`, `input.ts`, `main.ts`, `api.ts`, `telemetry.ts`: browser wiring.
 - `src/server/`: Devvit server with the leaderboard endpoints. Tested with a fake Redis.
 - `scripts/local-server.ts`: static server plus fake API for local play.
 - `public/animals/`: sprites from Kenney's Animal Pack Redux (CC0).

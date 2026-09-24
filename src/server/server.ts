@@ -1,10 +1,13 @@
 import type {IncomingMessage, ServerResponse} from 'node:http'
+import {telemetryRouter} from '@devvit/analytics/server/reddit'
+import {TELEMETRY_DEFAULT_CLIENT_BASE_PATH} from '@devvit/analytics/shared/reddit'
 import {context, reddit} from '@devvit/web/server'
 import type {
   PartialJsonValue,
   TriggerResponse,
   UiResponse,
 } from '@devvit/web/shared'
+import express from 'express'
 import {
   type ChallengeRsp,
   Endpoint,
@@ -29,6 +32,13 @@ type AnyRsp =
   | TriggerResponse
   | ErrorRsp
 
+/**
+ * The SDK ships the five Journey routes as express middleware whose handlers
+ * call `res.json()`, so they need an express app to patch the response object.
+ * Nothing else here uses express.
+ */
+const telemetryApp = express().use(telemetryRouter)
+
 export async function onReq(
   reqMsg: IncomingMessage,
   rspMsg: ServerResponse,
@@ -46,6 +56,11 @@ async function route(
   reqMsg: IncomingMessage,
   rspMsg: ServerResponse,
 ): Promise<void> {
+  if (reqMsg.url?.startsWith(`${TELEMETRY_DEFAULT_CLIENT_BASE_PATH}/`)) {
+    telemetryApp(reqMsg, rspMsg)
+    return
+  }
+
   const endpoint = reqMsg.url?.slice(1) as Endpoint
   const method = EndpointMethod[endpoint]
 

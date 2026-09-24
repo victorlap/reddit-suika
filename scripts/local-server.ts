@@ -51,6 +51,17 @@ async function handle(
   const url = new URL(req.url ?? '/', `http://localhost:${PORT}`)
   const path = url.pathname.slice(1)
 
+  // Journeys only exist on Reddit. Answering here keeps local play from failing
+  // a fetch on every drop; the client warns once about the stub and moves on.
+  if (path.startsWith('api/telemetry/'))
+    return json(rsp, 200, {
+      journeyId: 'local',
+      receipt: {
+        status: 'JOURNEY_RECEIPT_UNSPECIFIED',
+        message: 'Journey telemetry is stubbed in local development.',
+      },
+    })
+
   if (path === Endpoint.GetLeaderboard && req.method === 'GET')
     return json(rsp, 200, leaderboard())
 

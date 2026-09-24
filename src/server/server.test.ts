@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import {createServer} from 'node:http'
 import type {AddressInfo, Server} from 'node:net'
 import {after, before, beforeEach, test} from 'node:test'
+import {telemetry} from '@devvit/analytics/server/reddit'
 import {type Context, reddit, redis, runWithContext} from '@devvit/web/server'
 import {
   type ChallengeRsp,
@@ -268,4 +269,24 @@ test('a failure seeding the new post still succeeds, since the post itself was a
   assert.equal(body.ok, true)
   assert.equal(body.postUrl, 'https://reddit.com/r/test/comments/new')
   assert.deepEqual(sorted('lb:t3_new'), [])
+})
+
+test('journey routes reach the telemetry plugin instead of falling through to 404', async () => {
+  const originalAppReady = telemetry.appReady
+  telemetry.appReady = async () => ({
+    receipt: {status: 'JOURNEY_RECEIPT_VALID', message: 'Success'},
+  })
+  try {
+    const rsp = await fetch(`${serverURL}/api/telemetry/journey/app-ready`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: '{}',
+    })
+    assert.equal(rsp.status, 200)
+    assert.deepEqual(await rsp.json(), {
+      receipt: {status: 'JOURNEY_RECEIPT_VALID', message: 'Success'},
+    })
+  } finally {
+    telemetry.appReady = originalAppReady
+  }
 })

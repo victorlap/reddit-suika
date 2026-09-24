@@ -1,7 +1,7 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "pile-kingdom",
-  "permissions": {"reddit": {"scope": "user"}},
+  "permissions": {"journeys": true, "reddit": {"scope": "user"}},
   "post": {
     "entrypoints": {
       "default": {
