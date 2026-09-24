@@ -28,6 +28,7 @@ const MIME: Record<string, string> = {
   '.js': 'text/javascript; charset=utf-8',
   '.map': 'application/json',
   '.png': 'image/png',
+  '.mp3': 'audio/mpeg',
   '.css': 'text/css; charset=utf-8',
 }
 

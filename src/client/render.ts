@@ -3,14 +3,15 @@ import {
   DANGER_Y,
   DROP_Y,
   HELP_BUTTON,
+  MUTE_BUTTON,
   STAGE,
   WORLD,
 } from '../shared/config.ts'
 import {MAX_TIER, TIERS, tierName, tierRadius} from '../shared/tiers.ts'
 import type {PhysicsBody} from './physics.ts'
 
-/** Chain slots start right of the help button and run to the world edge. */
-const CHAIN_X = HELP_BUTTON.x + HELP_BUTTON.size + 8
+/** Chain slots start right of the strip's buttons and run to the world edge. */
+const CHAIN_X = MUTE_BUTTON.x + MUTE_BUTTON.size + 8
 const CHAIN_PITCH = (WORLD.width - 6 - CHAIN_X) / MAX_TIER
 const CHAIN_RADIUS = CHAIN_PITCH / 2 - 1.5
 
@@ -90,17 +91,29 @@ export class Renderer {
   }
 
   /**
-   * Where the help button goes, in viewport CSS pixels. It is a DOM button so
-   * that it swallows the pointer instead of dropping an animal, which means the
-   * page has to move it whenever the stage is laid out again.
+   * Where a chain-strip button goes, in viewport CSS pixels. These are DOM
+   * buttons so that they swallow the pointer instead of dropping an animal,
+   * which means the page has to move them whenever the stage is laid out again.
    */
-  helpRect(): {left: number; top: number; size: number} {
+  buttonRect(box: {x: number; y: number; size: number}): {
+    left: number
+    top: number
+    size: number
+  } {
     const rect = this.#canvas.getBoundingClientRect()
     return {
-      left: rect.left + this.#offsetX + HELP_BUTTON.x * this.#scale,
-      top: rect.top + this.#offsetY + HELP_BUTTON.y * this.#scale,
-      size: HELP_BUTTON.size * this.#scale,
+      left: rect.left + this.#offsetX + box.x * this.#scale,
+      top: rect.top + this.#offsetY + box.y * this.#scale,
+      size: box.size * this.#scale,
     }
+  }
+
+  helpRect(): {left: number; top: number; size: number} {
+    return this.buttonRect(HELP_BUTTON)
+  }
+
+  muteRect(): {left: number; top: number; size: number} {
+    return this.buttonRect(MUTE_BUTTON)
   }
 
   draw(scene: Scene): void {

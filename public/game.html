@@ -34,7 +34,8 @@
     .overlay.show {
       display: grid;
     }
-    #help {
+    #help,
+    #mute {
       position: fixed;
       display: grid;
       place-items: center;
@@ -135,6 +136,14 @@
   <body>
     <canvas id="game"></canvas>
     <button id="help" type="button" aria-label="How to play">?</button>
+    <button
+      id="mute"
+      type="button"
+      aria-label="Mute sound"
+      aria-pressed="false"
+    >
+      &#9834;
+    </button>
     <div id="help-overlay" class="overlay">
       <div class="panel">
         <h1>How to play</h1>

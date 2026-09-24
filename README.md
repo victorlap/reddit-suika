@@ -113,6 +113,10 @@ and logs one line saying so.
 - Merge up to at least the dog (tier 6); score rises by 1, 3, 6, 10, 15, 21.
 - Fill past the dashed line for one second: game over overlay appears.
 - Leaderboard shows your name and rank; "Play again" resets.
+- Sound starts on the first drop, not on load. Merges sound lower the bigger
+  the animal; making a whale adds a fanfare on top.
+- The mute button next to "?" survives a reload, and silences music and effects
+  together.
 
 ## Layout
 
@@ -120,12 +124,17 @@ and logs one line saying so.
 - `src/client/game.ts`: pure rules (merging, scoring, cooldown, game over). Tested.
 - `src/client/physics.ts`: the only file that touches Matter.js. Tested headless.
 - `src/client/journey.ts`: pure Journey rules (progress scale, report-once). Tested.
+- `src/client/audio.ts`: the only file that touches Web Audio. Merge pitch is tested.
 - `src/client/render.ts`, `input.ts`, `main.ts`, `api.ts`, `telemetry.ts`: browser wiring.
 - `src/server/`: Devvit server with the leaderboard endpoints. Tested with a fake Redis.
 - `scripts/local-server.ts`: static server plus fake API for local play.
 - `public/animals/`: sprites from Kenney's Animal Pack Redux (CC0).
+- `public/audio/`: music and sound effects (CC0). See its `LICENSE.txt`.
 
 ## Credits
 
 Animal art: [Kenney Animal Pack Redux](https://kenney.nl/assets/animal-pack),
-CC0. Physics: [Matter.js](https://brm.io/matter-js/).
+CC0. Sound effects: [Kenney](https://kenney.nl/assets/category:Audio) impact,
+interface, and jingle packs, CC0. Music:
+["Bossa Nova" by Joth](https://opengameart.org/content/bossa-nova), CC0.
+Physics: [Matter.js](https://brm.io/matter-js/).
