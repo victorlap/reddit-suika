@@ -8,6 +8,8 @@ function key(t3: T3): string {
 }
 
 /** Store the score only if it beats the player's previous best. */
+// Note: the read and write below are not atomic (a concurrent submit could
+// race this check), which is acceptable for a community game's leaderboard.
 export async function dbSubmitScore(
   t3: T3,
   username: string,

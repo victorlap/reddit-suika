@@ -40,5 +40,10 @@ async function request(
     console.error(`HTTP ${rsp.status}: ${await rsp.text().catch(() => '')}`)
     return
   }
-  return (await rsp.json()) as LeaderboardRsp
+  return (await rsp.json().catch((err: unknown) => {
+    console.error(
+      `bad JSON response: ${err instanceof Error ? err.message : err}`,
+    )
+    return undefined
+  })) as LeaderboardRsp | undefined
 }

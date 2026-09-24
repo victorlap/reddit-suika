@@ -113,6 +113,21 @@ test('the animal just dropped is ignored for game over while it falls through th
   )
 })
 
+test('the drop cooldown delays when the above-line timer starts, not just the game-over decision', () => {
+  const g = new Game(() => 0)
+  g.drop(0, 42)
+  const hovering = [body(42, 1, 200, DANGER_Y - 5)]
+  // Still within the cooldown: the timer has not started yet.
+  assert.equal(g.checkGameOver(hovering, DROP_COOLDOWN_MS - 100), false)
+  // First tick after the cooldown ends: tracking starts now, not at the drop.
+  assert.equal(g.checkGameOver(hovering, GAME_OVER_GRACE_MS), false)
+  // A full GAME_OVER_GRACE_MS after the drop (i.e. right when a timer that
+  // started at drop time would have fired) must still be false, since
+  // tracking only began at GAME_OVER_GRACE_MS above.
+  assert.equal(g.checkGameOver(hovering, 2 * GAME_OVER_GRACE_MS - 1), false)
+  assert.equal(g.checkGameOver(hovering, 2 * GAME_OVER_GRACE_MS), true)
+})
+
 test('drop x is clamped so the animal never spawns inside a wall', () => {
   const r = tierRadius(3)
   assert.equal(clampDropX(-500, 3), r)
@@ -131,10 +146,13 @@ test('reset returns to a fresh ready state with zero score', () => {
   const g = new Game(() => 0)
   g.applyMerges([{a: body(1, 1), b: body(2, 1)}])
   g.drop(0, 1)
-  g.checkGameOver([body(1, 1, 200, 0)], 0)
-  g.checkGameOver([body(1, 1, 200, 0)], 5000)
+  g.checkGameOver([body(1, 1, 200, 0)], DROP_COOLDOWN_MS)
+  g.checkGameOver([body(1, 1, 200, 0)], DROP_COOLDOWN_MS + GAME_OVER_GRACE_MS)
   assert.equal(g.phase, 'over')
   g.reset()
   assert.equal(g.phase, 'ready')
   assert.equal(g.score, 0)
+  // A stale #aboveSince entry from the previous game must not end the next
+  // one instantly.
+  assert.equal(g.checkGameOver([body(1, 1, 200, 0)], 6000), false)
 })

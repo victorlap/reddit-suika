@@ -1,4 +1,3 @@
-import {once} from 'node:events'
 import type {IncomingMessage, ServerResponse} from 'node:http'
 import {context, reddit} from '@devvit/web/server'
 import type {
@@ -90,10 +89,28 @@ async function routeSubmitScore(
   return dbGetLeaderboard(t3, username)
 }
 
+const MAX_JSON_BODY_BYTES = 8 * 1024
+
 async function readJson<T>(reqMsg: IncomingMessage): Promise<T | undefined> {
   const chunks: Uint8Array[] = []
-  reqMsg.on('data', chunk => chunks.push(chunk))
-  await once(reqMsg, 'end')
+  let size = 0
+  try {
+    await new Promise<void>((resolve, reject) => {
+      reqMsg.on('data', (chunk: Buffer) => {
+        size += chunk.length
+        if (size > MAX_JSON_BODY_BYTES) {
+          reject(Error('request body too large'))
+          return
+        }
+        chunks.push(chunk)
+      })
+      reqMsg.on('end', resolve)
+      reqMsg.on('error', reject)
+      reqMsg.on('aborted', () => reject(Error('request aborted')))
+    })
+  } catch {
+    return
+  }
   try {
     return JSON.parse(`${Buffer.concat(chunks)}`) as T
   } catch {

@@ -1,0 +1,8 @@
+// TypeScript config for dev scripts. Typechecked only, never bundled.
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "references": [{"path": "../src/shared/"}]
+}

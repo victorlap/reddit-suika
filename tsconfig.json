@@ -2,6 +2,7 @@
   // Only build references.
   "files": [],
   "references": [
+    {"path": "./scripts/"},
     {"path": "./src/client/"},
     {"path": "./src/server/"},
     {"path": "./src/shared/"},
