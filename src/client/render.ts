@@ -4,11 +4,13 @@ import {
   DROP_Y,
   HELP_BUTTON,
   MUTE_BUTTON,
+  POPUP_FONT_PX,
   STAGE,
   WORLD,
 } from '../shared/config.ts'
 import {MAX_TIER, TIERS, tierName, tierRadius} from '../shared/tiers.ts'
 import type {PhysicsBody} from './physics.ts'
+import type {DrawnPopup} from './popups.ts'
 
 /** Chain slots start right of the strip's buttons and run to the world edge. */
 const CHAIN_X = MUTE_BUTTON.x + MUTE_BUTTON.size + 8
@@ -25,6 +27,10 @@ export type Scene = {
   score: number
   /** Flash the danger line when something is close to ending the game. */
   danger: boolean
+  /** Scores floating off the merges that earned them. */
+  popups: readonly DrawnPopup[]
+  /** Body id to size multiplier, for animals still bouncing into being. */
+  pops: ReadonlyMap<number, number>
 }
 
 export async function loadSprites(): Promise<Map<number, HTMLImageElement>> {
@@ -148,7 +154,14 @@ export class Renderer {
     ctx.stroke()
     ctx.setLineDash([])
 
-    for (const b of scene.bodies) this.#sprite(b.tier, b.x, b.y, b.angle)
+    for (const b of scene.bodies)
+      this.#sprite(
+        b.tier,
+        b.x,
+        b.y,
+        b.angle,
+        tierRadius(b.tier) * (scene.pops.get(b.id) ?? 1),
+      )
 
     if (scene.hover) {
       ctx.globalAlpha = 0.9
@@ -163,6 +176,8 @@ export class Renderer {
       ctx.setLineDash([])
       ctx.globalAlpha = 1
     }
+
+    this.#popups(scene.popups)
 
     // Evolution chain: what the player has made, and what is still ahead.
     const chainY = WORLD.height + CHAIN_HEIGHT / 2
@@ -183,6 +198,25 @@ export class Renderer {
     ctx.textAlign = 'right'
     ctx.fillText('NEXT', WORLD.width - 12, 10)
     this.#sprite(scene.nextTier, WORLD.width - 36, 46, 0, 22)
+    ctx.restore()
+  }
+
+  /** Scores floating up from their merges, outlined to stay legible on animals. */
+  #popups(popups: readonly DrawnPopup[]): void {
+    const ctx = this.#ctx
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.lineJoin = 'round'
+    for (const p of popups) {
+      ctx.globalAlpha = p.alpha
+      ctx.font = `bold ${POPUP_FONT_PX * p.scale}px system-ui, sans-serif`
+      ctx.lineWidth = 4 * p.scale
+      ctx.strokeStyle = '#fdf6e3'
+      ctx.strokeText(p.text, p.x, p.y)
+      ctx.fillStyle = '#5b4636'
+      ctx.fillText(p.text, p.x, p.y)
+    }
     ctx.restore()
   }
 
