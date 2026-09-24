@@ -24,17 +24,32 @@
       width: 100dvw;
       height: 100dvh;
     }
-    #overlay {
+    .overlay {
       position: fixed;
       inset: 0;
       display: none;
       place-items: center;
       background: rgba(31, 36, 48, 0.85);
     }
-    #overlay.show {
+    .overlay.show {
       display: grid;
     }
-    #panel {
+    #help {
+      position: fixed;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: #fdf6e3;
+      color: #5b4636;
+      font: inherit;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .panel {
+      box-sizing: border-box;
       background: #fdf6e3;
       color: #5b4636;
       border-radius: 16px;
@@ -43,7 +58,7 @@
       max-width: 90vw;
       text-align: center;
     }
-    #panel h1 {
+    .panel h1 {
       margin: 0 0 4px;
       font-size: 22px;
     }
@@ -76,7 +91,8 @@
       justify-content: center;
       gap: 10px;
     }
-    #again {
+    #again,
+    #help-close {
       font: inherit;
       font-weight: 700;
       padding: 10px 22px;
@@ -104,12 +120,39 @@
       margin: 10px 0 0;
       font-size: 13px;
     }
+    #help-list {
+      margin: 0 0 16px;
+      padding-left: 20px;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    #help-list li + li {
+      margin-top: 6px;
+    }
     </style>
   </head>
   <body>
     <canvas id="game"></canvas>
-    <div id="overlay">
-      <div id="panel">
+    <button id="help" type="button" aria-label="How to play">?</button>
+    <div id="help-overlay" class="overlay">
+      <div class="panel">
+        <h1>How to play</h1>
+        <ul id="help-list">
+          <li>Move to aim, let go to drop the animal.</li>
+          <li>Two of the same animal touching merge into the next one up.</li>
+          <li>
+            The row under the bucket runs chick to whale. Animals you have made
+            are lit up.
+          </li>
+          <li>Bigger animals score more, so plan where things land.</li>
+          <li>If the pile sits above the dashed line, the round ends.</li>
+        </ul>
+        <button id="help-close" type="button">Got it</button>
+      </div>
+    </div>
+    <div id="overlay" class="overlay">
+      <div class="panel">
         <h1>Game over</h1>
         <div id="final">0</div>
         <ol id="board"></ol>

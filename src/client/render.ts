@@ -1,12 +1,26 @@
-import {DANGER_Y, DROP_Y, WORLD} from '../shared/config.ts'
-import {TIERS, tierName, tierRadius} from '../shared/tiers.ts'
+import {
+  CHAIN_HEIGHT,
+  DANGER_Y,
+  DROP_Y,
+  HELP_BUTTON,
+  STAGE,
+  WORLD,
+} from '../shared/config.ts'
+import {MAX_TIER, TIERS, tierName, tierRadius} from '../shared/tiers.ts'
 import type {PhysicsBody} from './physics.ts'
+
+/** Chain slots start right of the help button and run to the world edge. */
+const CHAIN_X = HELP_BUTTON.x + HELP_BUTTON.size + 8
+const CHAIN_PITCH = (WORLD.width - 6 - CHAIN_X) / MAX_TIER
+const CHAIN_RADIUS = CHAIN_PITCH / 2 - 1.5
 
 export type Scene = {
   bodies: readonly PhysicsBody[]
   /** The animal waiting to be dropped, if the player may drop right now. */
   hover?: {tier: number; x: number}
   nextTier: number
+  /** Highest tier made this round; the chain lights up to here. */
+  bestTier: number
   score: number
   /** Flash the danger line when something is close to ending the game. */
   danger: boolean
@@ -51,16 +65,16 @@ export class Renderer {
     this.resize()
   }
 
-  /** Fit the 400x600 world into the canvas's CSS box, centred, HiDPI aware. */
+  /** Fit the bucket and the chain strip into the canvas's CSS box, centred. */
   resize(): void {
     this.#rect = this.#canvas.getBoundingClientRect()
     const rect = this.#rect
     const dpr = window.devicePixelRatio || 1
     this.#canvas.width = Math.round(rect.width * dpr)
     this.#canvas.height = Math.round(rect.height * dpr)
-    this.#scale = Math.min(rect.width / WORLD.width, rect.height / WORLD.height)
-    this.#offsetX = (rect.width - WORLD.width * this.#scale) / 2
-    this.#offsetY = (rect.height - WORLD.height * this.#scale) / 2
+    this.#scale = Math.min(rect.width / STAGE.width, rect.height / STAGE.height)
+    this.#offsetX = (rect.width - STAGE.width * this.#scale) / 2
+    this.#offsetY = (rect.height - STAGE.height * this.#scale) / 2
     this.#ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   }
 
@@ -73,6 +87,20 @@ export class Renderer {
     // per-frame getBoundingClientRect() cost that resize() caching fixed.
     const rect = this.#canvas.getBoundingClientRect()
     return (clientX - rect.left - this.#offsetX) / this.#scale
+  }
+
+  /**
+   * Where the help button goes, in viewport CSS pixels. It is a DOM button so
+   * that it swallows the pointer instead of dropping an animal, which means the
+   * page has to move it whenever the stage is laid out again.
+   */
+  helpRect(): {left: number; top: number; size: number} {
+    const rect = this.#canvas.getBoundingClientRect()
+    return {
+      left: rect.left + this.#offsetX + HELP_BUTTON.x * this.#scale,
+      top: rect.top + this.#offsetY + HELP_BUTTON.y * this.#scale,
+      size: HELP_BUTTON.size * this.#scale,
+    }
   }
 
   draw(scene: Scene): void {
@@ -122,6 +150,15 @@ export class Renderer {
       ctx.setLineDash([])
       ctx.globalAlpha = 1
     }
+
+    // Evolution chain: what the player has made, and what is still ahead.
+    const chainY = WORLD.height + CHAIN_HEIGHT / 2
+    for (const t of TIERS) {
+      ctx.globalAlpha = t.tier <= scene.bestTier ? 1 : 0.25
+      const x = CHAIN_X + (t.tier - 0.5) * CHAIN_PITCH
+      this.#sprite(t.tier, x, chainY, 0, CHAIN_RADIUS)
+    }
+    ctx.globalAlpha = 1
 
     // HUD
     ctx.fillStyle = '#5b4636'
