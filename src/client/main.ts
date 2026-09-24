@@ -7,8 +7,9 @@ import {
   PHYSICS_STEP_MS,
   WORLD,
 } from '../shared/config.ts'
-import {tierRadius} from '../shared/tiers.ts'
+import {MAX_TIER, tierRadius} from '../shared/tiers.ts'
 import {createChallenge, fetchLeaderboard, submitScore} from './api.ts'
+import {loadAudio, mergePlaybackRate} from './audio.ts'
 import {clampDropX, Game, physicsStepsFor} from './game.ts'
 import {attachInput} from './input.ts'
 import {Physics} from './physics.ts'
@@ -33,8 +34,12 @@ async function init(): Promise<void> {
   const helpCloseBtn = document.getElementById(
     'help-close',
   ) as HTMLButtonElement
+  const muteBtn = document.getElementById('mute') as HTMLButtonElement
   challengeBtn.disabled = true
 
+  // Audio fills itself in the background: 500KB of samples must not hold up the
+  // first drop, and App.Ready still means "sprites are up".
+  const audio = loadAudio()
   const sprites = await loadSprites()
   journey.appReady()
   const renderer = new Renderer(canvas, sprites)
@@ -49,9 +54,9 @@ async function init(): Promise<void> {
 
   window.addEventListener('resize', () => {
     renderer.resize()
-    placeHelpBtn()
+    placeStripBtns()
   })
-  placeHelpBtn()
+  placeStripBtns()
 
   attachInput(canvas, {
     move: clientX => {
@@ -64,6 +69,12 @@ async function init(): Promise<void> {
       game.drop(performance.now(), id)
       journey.dropped()
       hoverX = clampDropX(x, game.current)
+      // Embedded contexts start suspended, so the first drop is what unlocks
+      // sound. startMusic() is idempotent, and calling it every drop covers the
+      // case where the samples had not arrived yet on the first one.
+      audio.resume()
+      audio.play('drop')
+      audio.startMusic()
     },
   })
 
@@ -72,8 +83,24 @@ async function init(): Promise<void> {
     game.reset()
     submitted = false
     overlay.classList.remove('show')
+    // The next round's music waits for its first drop, the same as the first.
     journey.playedAgain()
   })
+
+  muteBtn.addEventListener('click', () => {
+    audio.resume()
+    audio.muted = !audio.muted
+    showMuted()
+  })
+
+  /** Keep the button's glyph, label, and pressed state on the mute flag. */
+  function showMuted(): void {
+    const {muted} = audio
+    muteBtn.textContent = muted ? '✕' : '♪'
+    muteBtn.setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound')
+    muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false')
+  }
+  showMuted()
 
   challengeBtn.addEventListener('click', () => void onChallengeClick())
 
@@ -88,14 +115,18 @@ async function init(): Promise<void> {
     pausedAt = undefined
   })
 
-  /** Keep the help button on its slot in the chain strip. */
-  function placeHelpBtn(): void {
-    const {left, top, size} = renderer.helpRect()
-    helpBtn.style.left = `${left}px`
-    helpBtn.style.top = `${top}px`
-    helpBtn.style.width = `${size}px`
-    helpBtn.style.height = `${size}px`
-    helpBtn.style.fontSize = `${Math.round(size * 0.6)}px`
+  /** Keep the strip buttons on their slots in the chain strip. */
+  function placeStripBtns(): void {
+    for (const [btn, rect] of [
+      [helpBtn, renderer.helpRect()],
+      [muteBtn, renderer.muteRect()],
+    ] as const) {
+      btn.style.left = `${rect.left}px`
+      btn.style.top = `${rect.top}px`
+      btn.style.width = `${rect.size}px`
+      btn.style.height = `${rect.size}px`
+      btn.style.fontSize = `${Math.round(rect.size * 0.6)}px`
+    }
   }
 
   function frame(now: number): void {
@@ -115,9 +146,17 @@ async function init(): Promise<void> {
         const pairs = physics.step(PHYSICS_STEP_MS)
         const merges = game.applyMerges(pairs)
         for (const id of merges.remove) physics.remove(id)
+        let biggest = 0
         for (const s of merges.spawn) {
           physics.spawn(s.tier, s.x, s.y, MERGE_POP_VELOCITY)
           journey.merged(s.tier)
+          biggest = Math.max(biggest, s.tier)
+        }
+        // A chain can resolve several merges in one step. Firing a sample for
+        // each is mush, so only the biggest animal of the step is heard.
+        if (biggest) {
+          audio.play('merge', mergePlaybackRate(biggest))
+          if (biggest === MAX_TIER) audio.play('fanfare')
         }
       }
       game.tick(now)
@@ -141,6 +180,8 @@ async function init(): Promise<void> {
     challengeBtn.disabled = true
     if (submitted) return
     submitted = true
+    audio.stopMusic()
+    audio.play('gameover')
     journey.gameOver(game.score)
     finalEl.textContent = `${game.score}`
     boardEl.replaceChildren()
