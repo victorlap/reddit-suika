@@ -22,11 +22,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
-    "@devvit/web": "0.14.5",
+    "@devvit/web": "0.14.6",
     "@types/express": "5.0.3",
     "@types/matter-js": "0.20.2",
     "@types/node": "24.13.6",
-    "devvit": "0.14.5",
+    "devvit": "0.14.6",
     "esbuild": "0.28.2",
     "express": "5.1.0",
     "typescript": "7.0.2"
@@ -35,7 +35,7 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
-    "@devvit/analytics": "0.14.5",
+    "@devvit/analytics": "0.14.6",
     "matter-js": "0.20.0"
   },
   "allowScripts": {
