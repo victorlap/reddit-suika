@@ -142,18 +142,6 @@ test('the drop cooldown delays when the above-line timer starts, not just the ga
   assert.equal(g.checkGameOver(hovering, 2 * GAME_OVER_GRACE_MS), true)
 })
 
-test('time spent reading the help does not count towards game over', () => {
-  const g = new Game(() => 0)
-  const above = [body(1, 1, 200, DANGER_Y - 5)]
-  assert.equal(g.checkGameOver(above, 0), false)
-  // The player opens the help with the pile already above the line and reads
-  // for ten seconds. Resuming must give those ten seconds back, not end the
-  // round on the first frame after.
-  g.resumeAfter(10_000)
-  assert.equal(g.checkGameOver(above, 10_000 + GAME_OVER_GRACE_MS - 1), false)
-  assert.equal(g.checkGameOver(above, 10_000 + GAME_OVER_GRACE_MS), true)
-})
-
 test('drop x is clamped so the animal never spawns inside a wall', () => {
   const r = tierRadius(3)
   assert.equal(clampDropX(-500, 3), r)

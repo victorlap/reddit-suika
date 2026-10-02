@@ -51,9 +51,17 @@ async function init(): Promise<void> {
   let hoverX = WORLD.width / 2
   let last = performance.now()
   let accumulator = 0
+  /**
+   * Time the world has actually simulated. The cooldown and the game-over grace
+   * run on this, not the wall clock: when frames stall (a slow phone, the app
+   * coming back from the background) physics is capped per frame, and a wall
+   * clock would end the round on animals that never got the time to settle.
+   * It also stands still while the help is open, so reading costs nothing.
+   */
+  let simMs = 0
   let submitted = false
   let challengePosted = false
-  let pausedAt: number | undefined
+  let paused = false
 
   window.addEventListener('resize', () => {
     renderer.resize()
@@ -69,7 +77,7 @@ async function init(): Promise<void> {
       if (game.phase !== 'ready') return
       const x = clampDropX(renderer.toWorldX(clientX), game.current)
       const id = physics.spawn(game.current, x, DROP_Y)
-      game.drop(performance.now(), id)
+      game.drop(simMs, id)
       journey.dropped()
       hoverX = clampDropX(x, game.current)
       // Embedded contexts start suspended, so the first drop is what unlocks
@@ -109,7 +117,7 @@ async function init(): Promise<void> {
   challengeBtn.addEventListener('click', () => void onChallengeClick())
 
   helpBtn.addEventListener('click', () => {
-    if (pausedAt === undefined) pausedAt = performance.now()
+    paused = true
     helpOverlay.classList.add('show')
   })
 
@@ -124,8 +132,7 @@ async function init(): Promise<void> {
 
   helpCloseBtn.addEventListener('click', () => {
     helpOverlay.classList.remove('show')
-    if (pausedAt !== undefined) game.resumeAfter(performance.now() - pausedAt)
-    pausedAt = undefined
+    paused = false
   })
 
   /** Keep the strip buttons on their slots in the chain strip. */
@@ -147,7 +154,6 @@ async function init(): Promise<void> {
     last = now
     // Reading the help must not cost the player their pile, so a paused frame
     // banks no time at all.
-    const paused = pausedAt !== undefined
     accumulator = paused
       ? 0
       : Math.min(accumulator + elapsed, PHYSICS_STEP_MS * 10)
@@ -157,6 +163,7 @@ async function init(): Promise<void> {
     if (game.phase !== 'over' && !paused) {
       for (let i = 0; i < steps; i++) {
         const pairs = physics.step(PHYSICS_STEP_MS)
+        simMs += PHYSICS_STEP_MS
         const merges = game.applyMerges(pairs)
         for (const id of merges.remove) {
           physics.remove(id)
@@ -176,8 +183,8 @@ async function init(): Promise<void> {
           if (biggest === MAX_TIER) audio.play('fanfare')
         }
       }
-      game.tick(now)
-      if (game.checkGameOver(physics.bodies(), now)) void onGameOver()
+      game.tick(simMs)
+      if (game.checkGameOver(physics.bodies(), simMs)) void onGameOver()
     }
 
     const bodies = physics.bodies()
