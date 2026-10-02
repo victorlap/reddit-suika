@@ -121,15 +121,6 @@ export class Game {
     return false
   }
 
-  /**
-   * Give back time the player spent with the game paused. Without this, a body
-   * that was already above the line ends the round the moment play resumes.
-   */
-  resumeAfter(pausedMs: number): void {
-    for (const [id, since] of this.#aboveSince)
-      this.#aboveSince.set(id, since + pausedMs)
-  }
-
   reset(): void {
     this.phase = 'ready'
     this.score = 0
