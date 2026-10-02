@@ -39,8 +39,9 @@ Two things it does on its own:
 - **Players can create posts.** The end-of-round panel offers "Challenge the
   subreddit", which submits a new game post as that player, titled
   `<name> piled up <score> in Pile Kingdom — can you beat it?`. The new post
-  opens with their score already on its leaderboard. Each player gets one
-  challenge per post, so a single game post cannot be used to flood the feed.
+  opens with their score already on its leaderboard. A player gets another
+  challenge from the same post only by beating the score they last challenged
+  with, so a single game post cannot be used to flood the feed.
 - **Scores are stored per post.** For every player who finishes a round, the app
   keeps a Reddit username and a best score, separately for each game post.
   Nothing else is collected and nothing is sent outside Reddit.
