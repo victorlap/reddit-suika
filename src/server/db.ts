@@ -54,12 +54,27 @@ export async function dbGetLeaderboard(
   return rsp
 }
 
-/** Atomically claims the one-challenge-per-player-per-post slot. */
+/**
+ * A challenge always carries the player's best, and a best never goes down,
+ * so a best that has not been challenged yet beats every challenge before it.
+ * Keying the slot by score makes "only a higher score can challenge again" a
+ * single atomic hSetNX.
+ */
+function challengeField(username: string, score: number): string {
+  return `${username}:${score}`
+}
+
+/** Atomically claims the player's challenge slot for this score on this post. */
 export async function dbClaimChallenge(
   t3: T3,
   username: string,
+  score: number,
 ): Promise<boolean> {
-  const claimed = await redis.hSetNX(challengeKey(t3), username, '1')
+  const claimed = await redis.hSetNX(
+    challengeKey(t3),
+    challengeField(username, score),
+    '1',
+  )
   return claimed === 1
 }
 
@@ -67,6 +82,7 @@ export async function dbClaimChallenge(
 export async function dbReleaseChallenge(
   t3: T3,
   username: string,
+  score: number,
 ): Promise<void> {
-  await redis.hDel(challengeKey(t3), [username])
+  await redis.hDel(challengeKey(t3), [challengeField(username, score)])
 }

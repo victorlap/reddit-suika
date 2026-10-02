@@ -114,10 +114,10 @@ async function routeCreateChallenge(): Promise<ChallengeRsp | ErrorRsp> {
   if (!username) return {error: 'sign in to post a challenge', status: 401}
   const score = await dbGetScore(t3, username)
   if (score === undefined) return {error: 'no score to share yet', status: 400}
-  const claimed = await dbClaimChallenge(t3, username)
+  const claimed = await dbClaimChallenge(t3, username, score)
   if (!claimed)
     return {
-      error: 'you already made a challenge from this post',
+      error: 'you already challenged with this score; beat it to go again',
       status: 409,
     }
   let post: Awaited<ReturnType<typeof reddit.submitCustomPost>>
@@ -136,7 +136,7 @@ async function routeCreateChallenge(): Promise<ChallengeRsp | ErrorRsp> {
     })
   } catch (err) {
     try {
-      await dbReleaseChallenge(t3, username)
+      await dbReleaseChallenge(t3, username, score)
     } catch (releaseErr) {
       console.error(
         `failed to release challenge slot; ${releaseErr instanceof Error ? releaseErr.stack : releaseErr}`,

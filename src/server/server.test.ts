@@ -227,13 +227,40 @@ test("the challenger is seeded onto the new post's board so it is never empty", 
 
 // This calls sequentially, so it proves hSetNX's refusal, not its atomicity
 // under concurrent requests.
-test('a second challenge from the same post is refused so the subreddit is not flooded', async () => {
+test('a second challenge with the same score is refused so the subreddit is not flooded', async () => {
   await submit(120)
   const first = await challenge()
   assert.equal(first.status, 200)
   const second = await challenge()
   assert.equal(second.status, 409)
   assert.equal(submitCustomPostCalls.length, 1)
+})
+
+test('a lower round after a challenge does not unlock another one', async () => {
+  await submit(120)
+  await challenge()
+  // The stored best stays 120, so there is nothing new to challenge with.
+  await submit(80)
+  const rsp = await challenge()
+  assert.equal(rsp.status, 409)
+  assert.equal(submitCustomPostCalls.length, 1)
+})
+
+test('beating your own challenged score unlocks a new challenge with the new best', async () => {
+  await submit(120)
+  await challenge()
+  await submit(150)
+  const rsp = await challenge()
+  assert.equal(rsp.status, 200)
+  const body = (await rsp.json()) as ChallengeRsp
+  assert.equal(body.score, 150)
+  assert.equal(submitCustomPostCalls.length, 2)
+  assert.deepEqual(submitCustomPostCalls[1]?.postData, {
+    challenger: 'alice',
+    target: 150,
+  })
+  // And that new best is spent too, until it is beaten in turn.
+  assert.equal((await challenge()).status, 409)
 })
 
 test('a player with no score cannot post a challenge', async () => {

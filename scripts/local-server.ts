@@ -21,7 +21,8 @@ const scores = new Map<string, number>([
   ['snoo', 420],
   ['wombat_fan', 260],
 ])
-const challenged = new Set<string>()
+/** Scores already challenged with; only a new best can challenge again. */
+const challenged = new Set<number>()
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -92,12 +93,12 @@ async function handle(
     const score = scores.get(USERNAME)
     if (score === undefined)
       return json(rsp, 400, {error: 'no score to share yet', status: 400})
-    if (challenged.has(USERNAME))
+    if (challenged.has(score))
       return json(rsp, 409, {
-        error: 'you already made a challenge from this post',
+        error: 'you already challenged with this score; beat it to go again',
         status: 409,
       })
-    challenged.add(USERNAME)
+    challenged.add(score)
     const title = `${USERNAME} piled up ${score} in Pile Kingdom — can you beat it?`
     const postData = {challenger: USERNAME, target: score}
     console.log(`would submit challenge post: ${title}`, postData)
