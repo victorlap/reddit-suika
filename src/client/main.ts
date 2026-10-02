@@ -60,7 +60,10 @@ async function init(): Promise<void> {
    */
   let simMs = 0
   let submitted = false
-  let challengePosted = false
+  /** The score this player last challenged with from this post, if any. */
+  let challengedScore: number | undefined
+  /** The player's stored best on this post, as of the last board. */
+  let best: number | undefined
   let paused = false
 
   window.addEventListener('resize', () => {
@@ -212,16 +215,22 @@ async function init(): Promise<void> {
     finalEl.textContent = `${game.score}`
     boardEl.replaceChildren()
     meEl.textContent = 'Saving score…'
-    // The one-challenge-per-post slot outlives a round, so only a player who
-    // has not spent it gets the button back.
-    if (!challengePosted) {
-      challengeBtn.textContent = CHALLENGE_LABEL
-      challengeMsgEl.textContent = ''
-    }
     overlay.classList.add('show')
 
     let board = await submitScore(game.score)
-    challengeBtn.disabled = challengePosted
+    if (board && board !== 'signedOut') best = board.me?.score
+    // A challenge spends the player's best on this post, so the button only
+    // comes back once a round has raised that best past it.
+    const canChallenge =
+      challengedScore === undefined ||
+      (best !== undefined && best > challengedScore)
+    if (canChallenge) {
+      challengeBtn.textContent = CHALLENGE_LABEL
+      challengeMsgEl.textContent = ''
+    } else {
+      challengeBtn.textContent = `Beat ${challengedScore} to challenge again`
+    }
+    challengeBtn.disabled = !canChallenge
     if (board === 'signedOut') {
       meEl.textContent = 'Sign in to Reddit to post your score.'
       board = await fetchLeaderboard()
@@ -263,10 +272,10 @@ async function init(): Promise<void> {
       return
     }
     if (rsp === 'alreadyChallenged') {
-      challengePosted = true
+      challengedScore = best
       challengeBtn.textContent = 'Already challenged'
       challengeMsgEl.textContent =
-        'You already made a challenge from this post.'
+        'You already challenged with this score. Beat it to go again.'
       return
     }
     if (rsp === 'noScore' || rsp === undefined) {
@@ -278,7 +287,7 @@ async function init(): Promise<void> {
           : 'Could not post your challenge.'
       return
     }
-    challengePosted = true
+    challengedScore = rsp.score
     challengeBtn.textContent = 'Challenge posted'
     const link = document.createElement('a')
     link.textContent = 'View your challenge'

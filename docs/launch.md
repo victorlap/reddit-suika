@@ -61,7 +61,8 @@ Under Reddit's 500-character limit.
 >
 > Each game post has its own top 10. When a round ends you can hit "Challenge
 > the subreddit" to turn your score into a new post with your name on the
-> board. You get one challenge per post, so the feed doesn't drown.
+> board. To post another from the same game, beat the score you challenged
+> with, so the feed doesn't drown in repeats.
 >
 > Nobody has made a whale here yet. Post a screenshot when you do.
 >
@@ -86,7 +87,8 @@ subreddit, so people land in a playable card.
 >   read. It's the cheapest "this is a game, tap it" signal I could think of.
 > - **Challenge posts.** At game over, a player can submit their score as a new
 >   post, run as the user, with their score already on its leaderboard. One
->   per player per post, enforced server-side, so it can't flood a sub.
+>   per player per post until they beat their own score, enforced server-side
+>   with one atomic `hSetNX` keyed by score, so it can't flood a sub.
 > - **Game-over timing runs on simulated time, not the wall clock.** Physics
 >   catches up at most five steps a frame. On a phone that came back from the
 >   background, a wall-clock timer ended rounds on animals that never got the
