@@ -25,7 +25,7 @@
     "@devvit/web": "0.14.6",
     "@types/express": "5.0.6",
     "@types/matter-js": "0.20.2",
-    "@types/node": "24.19.1",
+    "@types/node": "24.19.2",
     "devvit": "0.14.6",
     "esbuild": "0.28.2",
     "express": "5.2.1",
