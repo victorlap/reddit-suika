@@ -26,11 +26,17 @@ const original = {
   hSetNX: redis.hSetNX,
   hDel: redis.hDel,
 }
-const originalReddit = {submitCustomPost: reddit.submitCustomPost}
+const originalReddit = {
+  submitCustomPost: reddit.submitCustomPost,
+  submitComment: reddit.submitComment,
+}
 let username: string | undefined = 'alice'
 type SubmitCustomPostOpts = Parameters<typeof reddit.submitCustomPost>[0]
 let submitCustomPostCalls: SubmitCustomPostOpts[] = []
 let submitCustomPostShouldFail = false
+type SubmitCommentOpts = Parameters<typeof reddit.submitComment>[0]
+let submitCommentCalls: SubmitCommentOpts[] = []
+let submitCommentShouldFail = false
 let zAddShouldFailFor: string | undefined
 
 function sorted(key: string): {member: string; score: number}[] {
@@ -82,6 +88,11 @@ before(async () => {
       url: 'https://reddit.com/r/test/comments/new',
     } as unknown as Awaited<ReturnType<typeof reddit.submitCustomPost>>
   }) as typeof reddit.submitCustomPost
+  reddit.submitComment = (async opts => {
+    submitCommentCalls.push(opts)
+    if (submitCommentShouldFail) throw Error('submitComment failed')
+    return {} as Awaited<ReturnType<typeof reddit.submitComment>>
+  }) as typeof reddit.submitComment
 
   server = createServer(async (req, rsp) => {
     await runWithContext(
@@ -115,6 +126,8 @@ beforeEach(() => {
   hashes.clear()
   submitCustomPostCalls = []
   submitCustomPostShouldFail = false
+  submitCommentCalls = []
+  submitCommentShouldFail = false
   zAddShouldFailFor = undefined
   username = 'alice'
 })
@@ -296,6 +309,55 @@ test('a failure seeding the new post still succeeds, since the post itself was a
   assert.equal(body.ok, true)
   assert.equal(body.postUrl, 'https://reddit.com/r/test/comments/new')
   assert.deepEqual(sorted('lb:t3_new'), [])
+})
+
+test('beating the top score on a post announces it in a comment from the app', async () => {
+  await submit(120)
+  username = 'bob'
+  await submit(150)
+  assert.equal(submitCommentCalls.length, 1)
+  const call = submitCommentCalls[0]
+  assert.equal(call?.id, 't3_123')
+  assert.equal(call?.runAs, 'APP')
+  assert.match(
+    call && 'text' in call ? call.text : '',
+    /u\/bob.*150.*u\/alice.*120/,
+  )
+})
+
+test('raising your own top score is announced too', async () => {
+  await submit(120)
+  await submit(150)
+  assert.equal(submitCommentCalls.length, 1)
+  const call = submitCommentCalls[0]
+  assert.match(call && 'text' in call ? call.text : '', /u\/alice.*150.*120/)
+})
+
+test('scores that do not beat the top score stay quiet', async () => {
+  // The first score beats no one, so it is not a record worth announcing.
+  await submit(120)
+  username = 'bob'
+  await submit(120) // a tie is not a new record
+  await submit(90) // a personal best below the top
+  username = 'alice'
+  await submit(100) // lower than alice's own best, so nothing is stored
+  assert.equal(submitCommentCalls.length, 0)
+})
+
+test('seeding a new challenge post does not comment on it', async () => {
+  await submit(120)
+  await challenge()
+  assert.equal(submitCommentCalls.length, 0)
+})
+
+test('a failed comment still saves the score, since the record matters more than the announcement', async () => {
+  await submit(120)
+  username = 'bob'
+  submitCommentShouldFail = true
+  const rsp = await submit(150)
+  assert.equal(rsp.status, 200)
+  const body = (await rsp.json()) as LeaderboardRsp
+  assert.deepEqual(body.me, {username: 'bob', score: 150, rank: 1})
 })
 
 test('journey routes reach the telemetry plugin instead of falling through to 404', async () => {
