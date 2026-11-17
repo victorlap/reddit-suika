@@ -3,9 +3,9 @@ name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ["develop", "main"]
   pull_request:
-    branches: ["main"]
+    branches: ["develop", "main"]
 
 jobs:
   test:
@@ -22,13 +22,15 @@ jobs:
       - name: Test
         run: npm test
 
-  # Every push to main becomes a new app version. Devvit auto-bumps the patch
-  # number, so nothing in the repo tracks it. Publishing a release stays manual:
-  # this app uses custom posts, so `devvit publish` always files a review
-  # request, which is not something to do per commit.
+  # Every push to main becomes a new app version. Work, including Dependabot
+  # merges, lands on develop, which only runs the tests; merging develop into
+  # main is the release step. Devvit auto-bumps the patch number, so nothing in
+  # the repo tracks it. Publishing stays manual: this app uses custom posts, so
+  # `devvit publish` always files a review request, which is not something to
+  # do per commit.
   upload:
     needs: test
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # The next version number is derived from the latest one on the server, so
     # two uploads at once would race for it.

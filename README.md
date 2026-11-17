@@ -78,6 +78,10 @@ publishing each bump the patch number from whatever the server already has, so
 there is nothing to edit before deploying. `devvit.json` points `scripts.build`
 at `npm run build`, so both build the bundles themselves.
 
+**Branches.** Work, including Dependabot updates, merges into `develop`, the
+default branch. CI runs the tests there but uploads nothing. `main` is the
+release branch: merge `develop` into `main` when you want a new version.
+
 **Every push to `main` uploads automatically.** The `upload` job in
 `.github/workflows/ci.yaml` runs after the tests pass and creates a new version.
 Uploaded versions are visible only to you and installable on a test subreddit
