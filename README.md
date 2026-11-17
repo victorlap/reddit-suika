@@ -22,6 +22,7 @@ Tiers: chick, frog, duck, rabbit, penguin, dog, pig, cow, hippo, elephant, whale
 - The end-of-round panel shows the post's top 10 and where you placed. "Play
   again" starts a fresh round on the same post.
 - "Challenge the subreddit" turns your score into a new game post.
+- Beating a post's top score gets announced in a comment on that post.
 - The "?" button reopens the rules and the credits. The music note button
   silences music and effects together and remembers the setting.
 
@@ -34,7 +35,7 @@ itself.
 There is nothing to configure. The app has no settings screen, and nothing to
 set up beyond installing it.
 
-Two things it does on its own:
+Three things it does on its own:
 
 - **Players can create posts.** The end-of-round panel offers "Challenge the
   subreddit", which submits a new game post as that player, titled
@@ -42,6 +43,10 @@ Two things it does on its own:
   opens with their score already on its leaderboard. A player gets another
   challenge from the same post only by beating the score they last challenged
   with, so a single game post cannot be used to flood the feed.
+- **The app comments on new records.** When a score beats a post's top score,
+  the app account comments on that post, e.g. `u/<name> took the top spot with
+  <score>, beating u/<previous>'s <score>.`. Raising your own top score counts
+  too. The first score on a post beats no one, so it is not announced.
 - **Scores are stored per post.** For every player who finishes a round, the app
   keeps a Reddit username and a best score, separately for each game post.
   Nothing else is collected and nothing is sent outside Reddit.
