@@ -13,6 +13,8 @@ Tiers: chick, frog, duck, rabbit, penguin, dog, pig, cow, hippo, elephant, whale
 
 ## How to play
 
+- The post card in the feed shows the post's top 3 with 🥇 🥈 🥉. Tap Play to
+  start.
 - Move the pointer or your finger to aim, let go to drop the animal.
 - Two of the same animal that touch merge into the next one up. Bigger animals
   are worth more: a merge scores 1, 3, 6, 10, 15, 21, and so on up the row.
