@@ -41,11 +41,13 @@ Inputs the spec implies but did not spell out. Each has a test in the owning tas
 ### Task 1: Scaffold from the Devvit bare template
 
 **Files:**
+
 - Create: everything from the `bare` template, renamed. Source is already cloned at `/tmp/dv-bare` (BSD-3-Clause, Reddit Inc.). If missing, `gh repo clone reddit/devvit-template-bare /tmp/dv-bare -- --depth 1`.
 - Modify: `package.json`, `devvit.json`, `public/game.html`, `.gitignore`
 - Rename: `src/client/game.ts` to `src/client/main.ts`
 
 **Interfaces:**
+
 - Produces: a repo where `npm test` passes with the template's counter example still in place. Later tasks replace the counter code.
 
 - [x] **Step 1: Copy template files without git and node_modules**
@@ -99,11 +101,13 @@ git commit -m "chore: scaffold from devvit bare template with matter-js"
 ### Task 2: Shared tier table, config, and API types
 
 **Files:**
+
 - Create: `src/shared/tiers.ts`, `src/shared/config.ts`
 - Rewrite: `src/shared/api.ts`
 - Test: `src/shared/tiers.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `TIERS: readonly TierDef[]` with `TierDef = {tier: number; name: string; radius: number}`, index `tier - 1`.
   - `MAX_TIER = 11`, `MAX_DROP_TIER = 5`.
@@ -120,20 +124,17 @@ Note: rewriting `api.ts` breaks the template's counter server and client. That i
 ```ts
 import assert from 'node:assert/strict'
 import {test} from 'node:test'
-import {
-  MAX_DROP_TIER,
-  MAX_TIER,
-  TIERS,
-  tierRadius,
-  tierScore,
-} from './tiers.ts'
+import {MAX_DROP_TIER, MAX_TIER, TIERS, tierRadius, tierScore} from './tiers.ts'
 
 test('there are 11 tiers from chick to whale and radii grow monotonically', () => {
   assert.equal(TIERS.length, MAX_TIER)
   assert.equal(TIERS[0]?.name, 'chick')
   assert.equal(TIERS[MAX_TIER - 1]?.name, 'whale')
   for (let i = 1; i < TIERS.length; i++)
-    assert.ok(tierRadius(i + 1) > tierRadius(i), `tier ${i + 1} bigger than ${i}`)
+    assert.ok(
+      tierRadius(i + 1) > tierRadius(i),
+      `tier ${i + 1} bigger than ${i}`,
+    )
 })
 
 test('merge score is the triangular number so late merges pay off', () => {
@@ -374,10 +375,12 @@ git commit -m "feat: add shared tier table, tuning config, and leaderboard api t
 ### Task 3: Pure game rules
 
 **Files:**
+
 - Create: `src/client/game.ts`
 - Test: `src/client/game.test.ts`
 
 **Interfaces:**
+
 - Consumes: `tierScore`, `tierRadius`, `MAX_TIER`, `MAX_DROP_TIER` from `../shared/tiers.ts`; `WORLD`, `DANGER_Y`, `DROP_COOLDOWN_MS`, `GAME_OVER_GRACE_MS`, `PHYSICS_STEP_MS`, `MAX_PHYSICS_STEPS_PER_FRAME` from `../shared/config.ts`.
 - Produces:
   - `type BodyInfo = {id: number; tier: number; x: number; y: number}`
@@ -458,7 +461,10 @@ test('dropping starts a cooldown, then the game is ready again', () => {
 test('dropped tiers always come from the five smallest animals', () => {
   for (const roll of [0, 0.2, 0.5, 0.8, 0.999]) {
     const g = new Game(() => roll)
-    assert.ok(g.current >= 1 && g.current <= MAX_DROP_TIER, `current ${g.current}`)
+    assert.ok(
+      g.current >= 1 && g.current <= MAX_DROP_TIER,
+      `current ${g.current}`,
+    )
     assert.ok(g.next >= 1 && g.next <= MAX_DROP_TIER, `next ${g.next}`)
   }
 })
@@ -483,7 +489,10 @@ test('a body above the danger line for a full second ends the game, a brief boun
   const above = [body(1, 1, 200, DANGER_Y - 5)]
   assert.equal(g.checkGameOver(above, 0), false)
   assert.equal(g.checkGameOver(above, GAME_OVER_GRACE_MS - 1), false)
-  assert.equal(g.checkGameOver([body(1, 1, 200, DANGER_Y + 50)], GAME_OVER_GRACE_MS), false)
+  assert.equal(
+    g.checkGameOver([body(1, 1, 200, DANGER_Y + 50)], GAME_OVER_GRACE_MS),
+    false,
+  )
   assert.equal(g.checkGameOver(above, GAME_OVER_GRACE_MS + 10), false)
   assert.equal(g.checkGameOver(above, 2 * GAME_OVER_GRACE_MS + 10), true)
   assert.equal(g.phase, 'over')
@@ -497,7 +506,10 @@ test('the animal just dropped is ignored for game over while it falls through th
   assert.equal(g.checkGameOver(falling, DROP_COOLDOWN_MS - 1), false)
   // Still above the line long after the cooldown: now it counts.
   assert.equal(g.checkGameOver(falling, DROP_COOLDOWN_MS), false)
-  assert.equal(g.checkGameOver(falling, DROP_COOLDOWN_MS + GAME_OVER_GRACE_MS), true)
+  assert.equal(
+    g.checkGameOver(falling, DROP_COOLDOWN_MS + GAME_OVER_GRACE_MS),
+    true,
+  )
 })
 
 test('drop x is clamped so the animal never spawns inside a wall', () => {
@@ -662,7 +674,9 @@ export class Game {
   }
 
   #rollTier(): number {
-    return 1 + Math.min(MAX_DROP_TIER - 1, Math.floor(this.#rng() * MAX_DROP_TIER))
+    return (
+      1 + Math.min(MAX_DROP_TIER - 1, Math.floor(this.#rng() * MAX_DROP_TIER))
+    )
   }
 }
 ```
@@ -685,10 +699,12 @@ git commit -m "feat: add pure game rules for merging, scoring, cooldown, and gam
 ### Task 4: Matter.js physics wrapper
 
 **Files:**
+
 - Create: `src/client/physics.ts`
 - Test: `src/client/physics.test.ts`
 
 **Interfaces:**
+
 - Consumes: `BodyInfo`, `CollisionPair` from `./game.ts`; `WORLD`, `WALL_THICKNESS`, `BODY`, `GRAVITY_Y` from `../shared/config.ts`; `tierRadius` from `../shared/tiers.ts`.
 - Produces:
   - `type PhysicsBody = BodyInfo & {angle: number}`
@@ -717,7 +733,9 @@ test('two overlapping same-tier animals report one collision pair carrying tier 
   const ids = [pairs[0]?.a.id, pairs[0]?.b.id].sort()
   assert.deepEqual(ids, [a, b].sort())
   assert.equal(pairs[0]?.a.tier, 3)
-  assert.ok(typeof pairs[0]?.a.x === 'number' && typeof pairs[0]?.a.y === 'number')
+  assert.ok(
+    typeof pairs[0]?.a.x === 'number' && typeof pairs[0]?.a.y === 'number',
+  )
 })
 
 test('an animal falls and comes to rest on the floor instead of leaving the world', () => {
@@ -726,7 +744,10 @@ test('an animal falls and comes to rest on the floor instead of leaving the worl
   for (let i = 0; i < 600; i++) p.step(1000 / 60)
   const b = p.bodies().find(b => b.id === id)
   assert.ok(b, 'body still exists')
-  assert.ok(b.y < WORLD.height && b.y > WORLD.height - tierRadius(1) - 5, `y=${b.y}`)
+  assert.ok(
+    b.y < WORLD.height && b.y > WORLD.height - tierRadius(1) - 5,
+    `y=${b.y}`,
+  )
 })
 
 test('hitting a wall is not reported as a collision pair', () => {
@@ -838,7 +859,12 @@ export class Physics {
 function toInfo(body: Matter.Body): BodyInfo | undefined {
   const plugin = body.plugin as Partial<AnimalPlugin> | undefined
   if (body.isStatic || typeof plugin?.tier !== 'number') return
-  return {id: body.id, tier: plugin.tier, x: body.position.x, y: body.position.y}
+  return {
+    id: body.id,
+    tier: plugin.tier,
+    x: body.position.x,
+    y: body.position.y,
+  }
 }
 ```
 
@@ -860,10 +886,12 @@ git commit -m "feat: add matter-js physics wrapper with animal collision reporti
 ### Task 5: Server leaderboard endpoints
 
 **Files:**
+
 - Rewrite: `src/server/db.ts`, `src/server/server.ts`
 - Test: `src/server/server.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Endpoint`, `EndpointMethod`, `LeaderboardRsp`, `SubmitScoreReq`, `ErrorRsp` from `../shared/api.ts`; `MAX_SCORE`, `LEADERBOARD_SIZE` from `../shared/config.ts`.
 - Produces:
   - `dbGetLeaderboard(t3: T3, username: string | undefined): Promise<LeaderboardRsp>`
@@ -1007,7 +1035,10 @@ test('a player outside the top ten still gets their own rank', async () => {
   username = 'user1'
   const rsp = await fetch(`${serverURL}/${Endpoint.GetLeaderboard}`)
   const body = (await rsp.json()) as LeaderboardRsp
-  assert.equal(body.entries.some(e => e.username === 'user1'), false)
+  assert.equal(
+    body.entries.some(e => e.username === 'user1'),
+    false,
+  )
   assert.deepEqual(body.me, {username: 'user1', score: 10, rank: 12})
 })
 
@@ -1173,10 +1204,12 @@ git commit -m "feat: add per-post leaderboard endpoints backed by a redis sorted
 ### Task 6: Local dev server without Reddit
 
 **Files:**
+
 - Create: `scripts/local-server.ts`
 - Modify: `package.json` (scripts), `biome.jsonc` if the script trips a lint
 
 **Interfaces:**
+
 - Consumes: `Endpoint` from `src/shared/api.ts`, `LeaderboardRsp`, `MAX_SCORE`, `LEADERBOARD_SIZE`.
 - Produces: `npm run dev:local` serves `public/` at `http://localhost:8787` and fakes both API routes in memory with username `local-player`.
 
@@ -1318,9 +1351,11 @@ git commit -m "feat: add local dev server that fakes the leaderboard api"
 ### Task 7: Renderer and input
 
 **Files:**
+
 - Create: `src/client/render.ts`, `src/client/input.ts`
 
 **Interfaces:**
+
 - Consumes: `PhysicsBody` from `./physics.ts`; `WORLD`, `DANGER_Y`, `DROP_Y` from `../shared/config.ts`; `TIERS`, `tierName`, `tierRadius` from `../shared/tiers.ts`.
 - Produces:
   - `loadSprites(): Promise<Map<number, HTMLImageElement>>`
@@ -1367,7 +1402,10 @@ export class Renderer {
   #offsetX = 0
   #offsetY = 0
 
-  constructor(canvas: HTMLCanvasElement, sprites: Map<number, HTMLImageElement>) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    sprites: Map<number, HTMLImageElement>,
+  ) {
     this.#canvas = canvas
     const ctx = canvas.getContext('2d')
     if (!ctx) throw Error('no 2d context')
@@ -1456,7 +1494,13 @@ export class Renderer {
   }
 
   /** Draw a tier sprite centred at (x, y), longest side = diameter. */
-  #sprite(tier: number, x: number, y: number, angle: number, radius = tierRadius(tier)): void {
+  #sprite(
+    tier: number,
+    x: number,
+    y: number,
+    angle: number,
+    radius = tierRadius(tier),
+  ): void {
     const img = this.#sprites.get(tier)
     const ctx = this.#ctx
     ctx.save()
@@ -1538,10 +1582,12 @@ git commit -m "feat: add canvas renderer and pointer input for the game client"
 ### Task 8: Wire the client, HTML shell, and leaderboard overlay
 
 **Files:**
+
 - Rewrite: `src/client/main.ts`, `public/game.html`
 - Create: `src/client/api.ts`
 
 **Interfaces:**
+
 - Consumes: `Game`, `clampDropX`, `physicsStepsFor` from `./game.ts`; `Physics` from `./physics.ts`; `Renderer`, `loadSprites` from `./render.ts`; `attachInput` from `./input.ts`; `Endpoint`, `LeaderboardRsp`, `SubmitScoreReq` from `../shared/api.ts`; `DROP_Y`, `PHYSICS_STEP_MS`, `MERGE_POP_VELOCITY`, `DANGER_Y` from `../shared/config.ts`.
 - Produces: a playable game at `npm run dev:local`.
 
@@ -1751,7 +1797,8 @@ async function init(): Promise<void> {
     const bodies = physics.bodies()
     renderer.draw({
       bodies,
-      hover: game.phase === 'ready' ? {tier: game.current, x: hoverX} : undefined,
+      hover:
+        game.phase === 'ready' ? {tier: game.current, x: hoverX} : undefined,
       nextTier: game.next,
       score: game.score,
       danger: bodies.some(b => b.y - tierRadius(b.tier) < DANGER_Y + 40),
@@ -1835,10 +1882,12 @@ git commit -m "feat: wire physics, rules, renderer, and leaderboard into a playa
 ### Task 9: Splash screen, README, and Devvit setup notes
 
 **Files:**
+
 - Modify: `public/splash.html`, `src/client/splash.ts` (keep as is), `readme.md` (rename to `README.md`), `devvit.json` (menu label text)
 - Delete: `public/snoo.png`
 
 **Interfaces:**
+
 - Produces: a splash that shows the whale sprite and a "Play" button; a README with local dev, Devvit onboarding, and the manual test checklist.
 
 - [x] **Step 1: Update splash.html**
@@ -1846,21 +1895,41 @@ git commit -m "feat: wire physics, rules, renderer, and leaderboard into a playa
 Replace the `<main>` contents with:
 
 ```html
-    <main>
-      <img src="/animals/whale.png" width="138" height="154" alt="Whale">
-      <h1>Pile Kingdom</h1>
-      <p>Have a whale of a pile. Match two animals to make a bigger one.</p>
-      <button id="start-btn" type="button">Play</button>
-    </main>
+<main>
+  <img src="/animals/whale.png" width="138" height="154" alt="Whale">
+  <h1>Pile Kingdom</h1>
+  <p>Have a whale of a pile. Match two animals to make a bigger one.</p>
+  <button id="start-btn" type="button">Play</button>
+</main>
 ```
 
 And add to the style block:
 
 ```css
-    body { background: #fdf6e3; color: #5b4636; font-family: system-ui, sans-serif; text-align: center; }
-    h1 { margin: 0; font-size: 28px; }
-    p { margin: 0; font-size: 14px; }
-    button { font: inherit; font-weight: 700; padding: 10px 28px; border: 0; border-radius: 999px; background: #e07a3a; color: #fff; cursor: pointer; }
+body {
+  background: #fdf6e3;
+  color: #5b4636;
+  font-family: system-ui, sans-serif;
+  text-align: center;
+}
+h1 {
+  margin: 0;
+  font-size: 28px;
+}
+p {
+  margin: 0;
+  font-size: 14px;
+}
+button {
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 28px;
+  border: 0;
+  border-radius: 999px;
+  background: #e07a3a;
+  color: #fff;
+  cursor: pointer;
+}
 ```
 
 ```bash

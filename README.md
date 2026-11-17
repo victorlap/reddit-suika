@@ -117,13 +117,13 @@ logout && npx devvit login` and updating the secret.
 The game reports a Journey per round. Numbers land on the app's Analytics tab at
 https://developers.reddit.com.
 
-| Event | Fires when |
-| --- | --- |
-| `App.Ready` | sprites finish loading |
-| `Journey.Start` | the first drop of a round |
-| `Journey.Progress` | a merge beats the round's best tier, `progress` 0.1 to 1 |
-| `Journey.Interaction` | "Play again" is clicked |
-| `Journey.End` | game over, `win` when the round made a whale |
+| Event                 | Fires when                                               |
+| --------------------- | -------------------------------------------------------- |
+| `App.Ready`           | sprites finish loading                                   |
+| `Journey.Start`       | the first drop of a round                                |
+| `Journey.Progress`    | a merge beats the round's best tier, `progress` 0.1 to 1 |
+| `Journey.Interaction` | "Play again" is clicked                                  |
+| `Journey.End`         | game over, `win` when the round made a whale             |
 
 Every round ends by filling the pen, so counting all of them as complete would
 pin completion rate at 100%. Making a whale is the objective, so that is what

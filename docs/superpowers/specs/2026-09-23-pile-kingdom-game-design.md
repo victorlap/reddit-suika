@@ -16,14 +16,14 @@ post's leaderboard.
 
 ## Decisions already made
 
-| Decision | Choice |
-|---|---|
-| Platform | Devvit Web, based on the official `bare` template (Node server, Redis, esbuild, no framework) |
-| Physics | Matter.js, single canvas, hand-drawn sprites |
-| Art | Kenney Animal Pack Redux, `PNG/Round` style, CC0. One PNG per animal, roughly 130 to 180 px, not square |
-| Leaderboard | Per post, top 10, stored in Redis sorted set keyed by post ID |
-| Tiers | 11: chick, frog, duck, rabbit, penguin, dog, pig, cow, hippo, elephant, whale |
-| Local dev | Same client bundle, stub server with in-memory leaderboard |
+| Decision    | Choice                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
+| Platform    | Devvit Web, based on the official `bare` template (Node server, Redis, esbuild, no framework)           |
+| Physics     | Matter.js, single canvas, hand-drawn sprites                                                            |
+| Art         | Kenney Animal Pack Redux, `PNG/Round` style, CC0. One PNG per animal, roughly 130 to 180 px, not square |
+| Leaderboard | Per post, top 10, stored in Redis sorted set keyed by post ID                                           |
+| Tiers       | 11: chick, frog, duck, rabbit, penguin, dog, pig, cow, hippo, elephant, whale                           |
+| Local dev   | Same client bundle, stub server with in-memory leaderboard                                              |
 
 ## 1. Game rules and tuning
 
@@ -54,19 +54,19 @@ submits it, and shows the leaderboard with a "play again" button.
 
 **Tier table.** Radii in logical units, sprite file from the pack's round style.
 
-| Tier | Animal | Radius | Score on merge |
-|---|---|---|---|
-| 1 | chick | 16 | 1 |
-| 2 | frog | 22 | 3 |
-| 3 | duck | 29 | 6 |
-| 4 | rabbit | 37 | 10 |
-| 5 | penguin | 46 | 15 |
-| 6 | dog | 56 | 21 |
-| 7 | pig | 67 | 28 |
-| 8 | cow | 79 | 36 |
-| 9 | hippo | 92 | 45 |
-| 10 | elephant | 106 | 55 |
-| 11 | whale | 120 | 66 |
+| Tier | Animal   | Radius | Score on merge |
+| ---- | -------- | ------ | -------------- |
+| 1    | chick    | 16     | 1              |
+| 2    | frog     | 22     | 3              |
+| 3    | duck     | 29     | 6              |
+| 4    | rabbit   | 37     | 10             |
+| 5    | penguin  | 46     | 15             |
+| 6    | dog      | 56     | 21             |
+| 7    | pig      | 67     | 28             |
+| 8    | cow      | 79     | 36             |
+| 9    | hippo    | 92     | 45             |
+| 10   | elephant | 106    | 55             |
+| 11   | whale    | 120    | 66             |
 
 All tuning constants (sizes, cooldown, danger line, gravity, restitution,
 friction) live in `src/shared/tiers.ts` and `src/shared/config.ts` so the feel
