@@ -49,24 +49,40 @@ const startBtn = document.getElementById('start-btn') as HTMLButtonElement
 startBtn.addEventListener('click', ev => requestExpandedMode(ev, 'game'))
 
 const beatEl = document.getElementById('beat') as HTMLParagraphElement
+const podiumEl = document.getElementById('podium') as HTMLOListElement
+
+const MEDALS = ['🥇', '🥈', '🥉'] as const
 
 async function renderBeat(): Promise<void> {
   const postData = context.postData
   const challenger = postData?.challenger
   const target = postData?.target
-  if (typeof challenger === 'string' && typeof target === 'number') {
+  if (typeof challenger === 'string' && typeof target === 'number')
     beatEl.textContent = `u/${challenger} scored ${target}. Beat it.`
-    return
-  }
   const board = await fetchLeaderboard()
   if (!board) {
-    beatEl.textContent = 'Could not load the scores.'
+    beatEl.textContent ||= 'Could not load the scores.'
     return
   }
-  const top = board.entries[0]
-  beatEl.textContent = top
-    ? `Score to beat: ${top.score} by u/${top.username}`
-    : 'No scores yet. Go first.'
+  if (!board.entries.length) {
+    beatEl.textContent ||= 'No scores yet. Go first.'
+    return
+  }
+  podiumEl.replaceChildren(
+    ...board.entries.slice(0, MEDALS.length).map((entry, i) => {
+      const li = document.createElement('li')
+      const medal = document.createElement('span')
+      medal.textContent = MEDALS[i] ?? ''
+      const name = document.createElement('span')
+      name.className = 'name'
+      name.textContent = `u/${entry.username}`
+      const score = document.createElement('span')
+      score.className = 'score'
+      score.textContent = `${entry.score}`
+      li.append(medal, name, score)
+      return li
+    }),
+  )
 }
 
 async function runDemo(): Promise<void> {
