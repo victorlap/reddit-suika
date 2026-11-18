@@ -64,6 +64,8 @@ Under Reddit's 500-character limit.
 > board. To post another from the same game, beat the score you challenged
 > with, so the feed doesn't drown in repeats.
 >
+> Take a post's top spot and the app announces it in a comment.
+>
 > Nobody has made a whale here yet. Post a screenshot when you do.
 >
 > Found a bug? Reply here with your device and what happened, or open an issue

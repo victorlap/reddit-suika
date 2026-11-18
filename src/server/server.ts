@@ -103,7 +103,21 @@ async function routeSubmitScore(
     score > MAX_SCORE
   )
     return {error: 'invalid score', status: 400}
-  await dbSubmitScore(t3, username, score)
+  const beaten = await dbSubmitScore(t3, username, score)
+  if (beaten) {
+    const text =
+      beaten.username === username
+        ? `u/${username} raised the top score to ${score} (was ${beaten.score}).`
+        : `u/${username} took the top spot with ${score}, beating u/${beaten.username}'s ${beaten.score}.`
+    try {
+      await reddit.submitComment({id: t3, text, runAs: 'APP'})
+    } catch (err) {
+      // The score is already saved; a missed announcement is not worth an error.
+      console.error(
+        `failed to comment on new top score; ${err instanceof Error ? err.stack : err}`,
+      )
+    }
+  }
   return dbGetLeaderboard(t3, username)
 }
 

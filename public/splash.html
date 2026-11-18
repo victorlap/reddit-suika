@@ -62,6 +62,44 @@
       margin: 0;
       font-size: 14px;
     }
+    #beat:empty,
+    #podium:empty {
+      display: none;
+    }
+    #podium {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      width: min(100%, 16rem);
+      display: grid;
+      gap: 2px;
+      font-size: 14px;
+    }
+    #podium li {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.5rem;
+      text-align: left;
+    }
+    #podium .name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #podium .score {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    /* The feed's regular card is 320px tall; the top 3 only fits under the
+       copy if the whale and the gaps give up some room. */
+    @media (max-height: 420px) {
+      main {
+        gap: 6px;
+      }
+      img {
+        height: 15dvh;
+      }
+    }
     button {
       font: inherit;
       font-weight: 700;
@@ -85,6 +123,7 @@
       <h1>Pile Kingdom</h1>
       <p>Have a whale of a pile. Match two animals to make a bigger one.</p>
       <p id="beat"></p>
+      <ol id="podium" aria-label="Top scores"></ol>
       <button id="start-btn" type="button">Play</button>
     </main>
     <script src="splash.js" type="module"></script>

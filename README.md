@@ -13,6 +13,8 @@ Tiers: chick, frog, duck, rabbit, penguin, dog, pig, cow, hippo, elephant, whale
 
 ## How to play
 
+- The post card in the feed shows the post's top 3 with 🥇 🥈 🥉. Tap Play to
+  start.
 - Move the pointer or your finger to aim, let go to drop the animal.
 - Two of the same animal that touch merge into the next one up. Bigger animals
   are worth more: a merge scores 1, 3, 6, 10, 15, 21, and so on up the row.
@@ -22,6 +24,7 @@ Tiers: chick, frog, duck, rabbit, penguin, dog, pig, cow, hippo, elephant, whale
 - The end-of-round panel shows the post's top 10 and where you placed. "Play
   again" starts a fresh round on the same post.
 - "Challenge the subreddit" turns your score into a new game post.
+- Beating a post's top score gets announced in a comment on that post.
 - The "?" button reopens the rules and the credits. The music note button
   silences music and effects together and remembers the setting.
 
@@ -34,7 +37,7 @@ itself.
 There is nothing to configure. The app has no settings screen, and nothing to
 set up beyond installing it.
 
-Two things it does on its own:
+Three things it does on its own:
 
 - **Players can create posts.** The end-of-round panel offers "Challenge the
   subreddit", which submits a new game post as that player, titled
@@ -42,6 +45,10 @@ Two things it does on its own:
   opens with their score already on its leaderboard. A player gets another
   challenge from the same post only by beating the score they last challenged
   with, so a single game post cannot be used to flood the feed.
+- **The app comments on new records.** When a score beats a post's top score,
+  the app account comments on that post, e.g. `u/<name> took the top spot with
+  <score>, beating u/<previous>'s <score>.`. Raising your own top score counts
+  too. The first score on a post beats no one, so it is not announced.
 - **Scores are stored per post.** For every player who finishes a round, the app
   keeps a Reddit username and a best score, separately for each game post.
   Nothing else is collected and nothing is sent outside Reddit.
@@ -77,6 +84,10 @@ Version numbers live on Reddit's side, not in this repo. Uploading and
 publishing each bump the patch number from whatever the server already has, so
 there is nothing to edit before deploying. `devvit.json` points `scripts.build`
 at `npm run build`, so both build the bundles themselves.
+
+**Branches.** Work, including Dependabot updates, merges into `develop`, the
+default branch. CI runs the tests there but uploads nothing. `main` is the
+release branch: merge `develop` into `main` when you want a new version.
 
 **Every push to `main` uploads automatically.** The `upload` job in
 `.github/workflows/ci.yaml` runs after the tests pass and creates a new version.
@@ -117,13 +128,13 @@ logout && npx devvit login` and updating the secret.
 The game reports a Journey per round. Numbers land on the app's Analytics tab at
 https://developers.reddit.com.
 
-| Event | Fires when |
-| --- | --- |
-| `App.Ready` | sprites finish loading |
-| `Journey.Start` | the first drop of a round |
-| `Journey.Progress` | a merge beats the round's best tier, `progress` 0.1 to 1 |
-| `Journey.Interaction` | "Play again" is clicked |
-| `Journey.End` | game over, `win` when the round made a whale |
+| Event                 | Fires when                                               |
+| --------------------- | -------------------------------------------------------- |
+| `App.Ready`           | sprites finish loading                                   |
+| `Journey.Start`       | the first drop of a round                                |
+| `Journey.Progress`    | a merge beats the round's best tier, `progress` 0.1 to 1 |
+| `Journey.Interaction` | "Play again" is clicked                                  |
+| `Journey.End`         | game over, `win` when the round made a whale             |
 
 Every round ends by filling the pen, so counting all of them as complete would
 pin completion rate at 100%. Making a whale is the objective, so that is what
